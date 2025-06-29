@@ -6,6 +6,7 @@ This package contains example scripts demonstrating various features:
 - example_sha256.py: Demonstrates SHA-256 hash generation for API authentication
 - example_instrument_list.py: Demonstrates fetching complete instrument list
 - example_daily_candles.py: Demonstrates fetching daily candles for configured instruments
+- example_pattern_analysis.py: Demonstrates candlestick pattern analysis on CSV files
 """
 
 __version__ = "1.0.0"

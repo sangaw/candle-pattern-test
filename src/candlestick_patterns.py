@@ -307,4 +307,120 @@ class CandlestickPatternAnalyzer:
             return []
             
         pattern_dates = data[data[pattern_name]]['Date'].tolist()
-        return pattern_dates 
+        return pattern_dates
+
+    def process_csv_file(self, input_file_path: str, output_file_path: str = None) -> str:
+        """
+        Process a CSV file containing OHLC data and add candlestick pattern columns.
+        
+        Args:
+            input_file_path (str): Path to the input CSV file
+            output_file_path (str): Path for the output CSV file. If None, will be auto-generated.
+            
+        Returns:
+            str: Path to the output CSV file
+        """
+        logger.info(f"Processing CSV file: {input_file_path}")
+        
+        try:
+            # Read the CSV file
+            logger.debug(f"Reading data from {input_file_path}")
+            data = pd.read_csv(input_file_path)
+            
+            # Check if required columns exist
+            required_columns = ['date', 'open', 'high', 'low', 'close']
+            missing_columns = [col for col in required_columns if col not in data.columns]
+            
+            if missing_columns:
+                logger.error(f"Missing required columns: {missing_columns}")
+                logger.error(f"Available columns: {list(data.columns)}")
+                raise ValueError(f"Missing required columns: {missing_columns}")
+            
+            logger.info(f"Successfully read {len(data)} rows from {input_file_path}")
+            
+            # Convert date column to datetime if it's not already
+            if not pd.api.types.is_datetime64_any_dtype(data['date']):
+                data['date'] = pd.to_datetime(data['date'])
+                logger.debug("Converted date column to datetime")
+            
+            # Rename columns to match the analyzer's expected format (capitalized)
+            column_mapping = {
+                'date': 'Date',
+                'open': 'Open', 
+                'high': 'High',
+                'low': 'Low',
+                'close': 'Close'
+            }
+            
+            # Only rename columns that exist
+            existing_columns = {k: v for k, v in column_mapping.items() if k in data.columns}
+            data = data.rename(columns=existing_columns)
+            
+            logger.debug(f"Renamed columns: {existing_columns}")
+            
+            # Sort by date to ensure chronological order
+            data = data.sort_values('Date').reset_index(drop=True)
+            logger.debug("Sorted data by date")
+            
+            # Analyze patterns
+            logger.info("Starting candlestick pattern analysis")
+            result = self.analyze_patterns(data)
+            
+            # Generate output filename if not provided
+            if output_file_path is None:
+                input_name = input_file_path.replace('.csv', '')
+                output_file_path = f"{input_name}_with_patterns.csv"
+            
+            # Save the result
+            logger.info(f"Saving result to {output_file_path}")
+            result.to_csv(output_file_path, index=False)
+            
+            # Log summary
+            pattern_summary = self.get_pattern_summary(result)
+            logger.info(f"Pattern analysis completed. Found patterns: {pattern_summary}")
+            
+            # Print summary to console
+            print(f"\nCandlestick Pattern Analysis Summary:")
+            print(f"Input file: {input_file_path}")
+            print(f"Output file: {output_file_path}")
+            print(f"Total candles analyzed: {len(result)}")
+            print(f"Patterns found:")
+            for pattern, count in pattern_summary.items():
+                if count > 0:
+                    print(f"  - {pattern}: {count}")
+            
+            return output_file_path
+            
+        except Exception as e:
+            logger.error(f"Error processing CSV file {input_file_path}: {str(e)}")
+            logger.error(f"Error type: {type(e).__name__}")
+            raise
+
+    def process_latest_nifty_file(self, data_directory: str = 'data') -> str:
+        """
+        Process the latest NIFTY CSV file in the data directory.
+        
+        Args:
+            data_directory (str): Directory containing CSV files
+            
+        Returns:
+            str: Path to the output CSV file
+        """
+        import os
+        import glob
+        
+        logger.info(f"Looking for NIFTY CSV files in {data_directory}")
+        
+        # Find all NIFTY CSV files
+        pattern = os.path.join(data_directory, "NIFTY_*.csv")
+        nifty_files = glob.glob(pattern)
+        
+        if not nifty_files:
+            logger.error(f"No NIFTY CSV files found in {data_directory}")
+            raise FileNotFoundError(f"No NIFTY CSV files found in {data_directory}")
+        
+        # Sort by modification time to get the latest
+        latest_file = max(nifty_files, key=os.path.getmtime)
+        logger.info(f"Found latest NIFTY file: {latest_file}")
+        
+        return self.process_csv_file(latest_file) 
