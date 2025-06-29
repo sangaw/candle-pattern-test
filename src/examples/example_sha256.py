@@ -5,8 +5,8 @@ Example script demonstrating SHA-256 hash generation for Kite Connect API.
 import sys
 import os
 
-# Add src to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
+# Import from parent directory (src)
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 from auth.token_generator import generate_sha256_hash, generate_sha256_hash_from_config
 

@@ -7,8 +7,8 @@ import sys
 import os
 from datetime import datetime, timedelta
 
-# Add src to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
+# Import from parent directory (src)
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 from data_fetcher import KiteConnectDataFetcher
 

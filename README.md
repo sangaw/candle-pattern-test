@@ -22,10 +22,14 @@ candle-pattern-test/
 │   ├── data_fetcher.py    # NIFTY data fetching module (Kite Connect)
 │   ├── candlestick_patterns.py  # Pattern recognition logic
 │   ├── utils.py           # Utility functions
-│   └── auth/              # Authentication module
+│   ├── auth/              # Authentication module
+│   │   ├── __init__.py
+│   │   ├── token_manager.py    # Automatic token management
+│   │   └── token_generator.py  # Token generation & SHA-256 utilities
+│   └── examples/          # Example scripts
 │       ├── __init__.py
-│       ├── token_manager.py    # Automatic token management
-│       └── token_generator.py  # Token generation & SHA-256 utilities
+│       ├── example_historical_candles.py  # Example for historical candles
+│       └── example_sha256.py     # Example for SHA-256 hash generation
 ├── tests/                 # Test package
 │   ├── __init__.py
 │   ├── test_data_fetcher.py
@@ -38,8 +42,6 @@ candle-pattern-test/
 ├── logs/                  # Log files directory
 ├── requirements.txt       # Python dependencies
 ├── .gitignore           # Git ignore rules
-├── example_historical_candles.py  # Example script for historical candles
-├── example_sha256.py     # Example script for SHA-256 hash generation
 └── README.md            # This file
 ```
 
@@ -218,10 +220,10 @@ python -m pytest tests/ --cov=src
 
 ```bash
 # Run historical candles example
-python example_historical_candles.py
+python -m src.examples.example_historical_candles
 
 # Run SHA-256 hash example
-python example_sha256.py
+python -m src.examples.example_sha256
 
 # Run token generator with menu options
 python src/auth/token_generator.py
