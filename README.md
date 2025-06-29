@@ -1,0 +1,189 @@
+# NIFTY Candlestick Pattern Tester
+
+A Python project to analyze and test candlestick patterns for NIFTY (National Stock Exchange of India) data.
+
+## Project Overview
+
+This project helps in:
+- Fetching NIFTY historical and intraday price data (Open, High, Low, Close, Volume) using Kite Connect API
+- Identifying various candlestick patterns
+- Testing pattern recognition algorithms
+- Analyzing pattern effectiveness
+- **Automatic token management** with refresh capabilities
+
+## Project Structure
+
+```
+candle-pattern-test/
+├── src/                    # Source code package
+│   ├── __init__.py
+│   ├── data_fetcher.py    # NIFTY data fetching module (Kite Connect)
+│   ├── candlestick_patterns.py  # Pattern recognition logic
+│   ├── utils.py           # Utility functions
+│   └── auth/              # Authentication module
+│       ├── __init__.py
+│       ├── token_manager.py    # Automatic token management
+│       └── token_generator.py  # Token generation utilities
+├── tests/                 # Test package
+│   ├── __init__.py
+│   ├── test_data_fetcher.py
+│   ├── test_token_manager.py
+│   ├── test_candlestick_patterns.py
+│   └── test_utils.py
+├── config/                # Configuration directory
+│   └── local-settings.json  # Kite Connect API configuration
+├── logs/                  # Log files directory
+├── requirements.txt       # Python dependencies
+├── .gitignore           # Git ignore rules
+└── README.md            # This file
+```
+
+## Features
+
+- **Data Fetching**: Retrieve NIFTY historical and intraday OHLCV data (via Kite Connect)
+- **Pattern Recognition**: Identify common candlestick patterns
+- **Testing Framework**: Comprehensive unit tests
+- **Extensible**: Easy to add new patterns and data sources
+- **Automatic Token Management**: Handles token refresh and validation automatically
+
+## Installation
+
+1. Clone the repository:
+```bash
+git clone <repository-url>
+cd candle-pattern-test
+```
+
+2. Create a virtual environment:
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
+
+3. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+4. Set up your Kite Connect API credentials:
+
+### Getting Kite Connect API Credentials
+
+1. **Create a Kite Connect App**:
+   - Go to [Kite Connect Developer Console](https://developers.kite.trade/)
+   - Sign up/login with your Zerodha account
+   - Create a new app to get your API key
+
+2. **Get Access Token**:
+   - Replace `XXX` in the URL below with your actual API key:
+     ```
+     https://kite.zerodha.com/connect/login?api_key=XXX
+     ```
+   - Open this URL in your browser
+   - Login with your Zerodha credentials
+   - After successful login, you'll be redirected to your redirect URL with a `request_token` parameter
+   - Copy the `request_token` value from the URL
+
+3. **Generate Access Token**:
+   - Use the token generator utility:
+   ```bash
+   python -m src.auth.token_generator
+   ```
+   - Or use the Kite Connect Python library:
+   ```python
+   from src.auth import generate_access_token
+   
+   access_token = generate_access_token("your_request_token")
+   ```
+
+4. **Update Configuration**:
+   - Edit `config/local-settings.json` and replace the placeholder values:
+   ```json
+   {
+     "kite_connect": {
+       "api_key": "your_kite_api_key_here",
+       "api_secret": "your_api_secret_here",
+       "access_token": "your_access_token_here",
+       "refresh_token": "",
+       "nifty_instrument_token": 256265
+     },
+     "logging": {
+       "level": "INFO",
+       "file": "logs/data_fetcher.log"
+     }
+   }
+   ```
+
+**Note**: The system now includes automatic token management. Access tokens will be automatically validated and refreshed when needed.
+
+## Usage
+
+### Basic Usage
+
+```python
+from src.data_fetcher import KiteConnectDataFetcher
+from src.candlestick_patterns import CandlestickPatternAnalyzer
+
+# Fetch NIFTY historical data (with automatic token management)
+fetcher = KiteConnectDataFetcher()
+data = fetcher.get_historical_data(from_date="2024-01-01", to_date="2024-01-31", interval="day")
+
+# Analyze patterns
+analyzer = CandlestickPatternAnalyzer()
+patterns = analyzer.analyze_patterns(data)
+
+print(patterns)
+```
+
+### Token Management
+
+```python
+from src.auth import TokenManager
+
+# Check token status
+token_manager = TokenManager()
+token_info = token_manager.get_token_info()
+print(f"Token needs refresh: {token_info['needs_refresh']}")
+
+# Manual token refresh (if needed)
+success = token_manager.manual_token_refresh("your_request_token")
+```
+
+### Running Tests
+
+```bash
+# Run all tests
+python -m pytest tests/
+
+# Run specific test file
+python -m pytest tests/test_token_manager.py
+
+# Run with coverage
+python -m pytest tests/ --cov=src
+```
+
+## Candlestick Patterns Supported
+
+- **Doji**: Open and close prices are nearly equal
+- **Hammer**: Small body with long lower shadow
+- **Shooting Star**: Small body with long upper shadow
+- **Engulfing**: Bullish and Bearish engulfing patterns
+- **Morning Star**: Three-candle bullish reversal pattern
+- **Evening Star**: Three-candle bearish reversal pattern
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests for new functionality
+5. Run the test suite
+6. Submit a pull request
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Disclaimer
+
+This project is for educational and research purposes only. It should not be used as financial advice. Always do your own research before making investment decisions. 
