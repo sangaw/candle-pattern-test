@@ -10,6 +10,8 @@ This project helps in:
 - Testing pattern recognition algorithms
 - Analyzing pattern effectiveness
 - **Automatic token management** with refresh capabilities
+- **SHA-256 hash generation** for API authentication
+- **CSV data export** for fetched historical candles
 
 ## Project Structure
 
@@ -23,7 +25,7 @@ candle-pattern-test/
 │   └── auth/              # Authentication module
 │       ├── __init__.py
 │       ├── token_manager.py    # Automatic token management
-│       └── token_generator.py  # Token generation utilities
+│       └── token_generator.py  # Token generation & SHA-256 utilities
 ├── tests/                 # Test package
 │   ├── __init__.py
 │   ├── test_data_fetcher.py
@@ -32,15 +34,21 @@ candle-pattern-test/
 │   └── test_utils.py
 ├── config/                # Configuration directory
 │   └── local-settings.json  # Kite Connect API configuration
+├── data/                  # CSV data files directory
 ├── logs/                  # Log files directory
 ├── requirements.txt       # Python dependencies
 ├── .gitignore           # Git ignore rules
+├── example_historical_candles.py  # Example script for historical candles
+├── example_sha256.py     # Example script for SHA-256 hash generation
 └── README.md            # This file
 ```
 
 ## Features
 
 - **Data Fetching**: Retrieve NIFTY historical and intraday OHLCV data (via Kite Connect)
+- **Historical Candles API**: Direct API endpoint access with proper headers
+- **CSV Data Export**: Automatically save fetched data as CSV files
+- **SHA-256 Hash Generation**: Generate hashes for API authentication
 - **Pattern Recognition**: Identify common candlestick patterns
 - **Testing Framework**: Comprehensive unit tests
 - **Extensible**: Easy to add new patterns and data sources
@@ -87,7 +95,7 @@ pip install -r requirements.txt
 3. **Generate Access Token**:
    - Use the token generator utility:
    ```bash
-   python -m src.auth.token_generator
+   python src/auth/token_generator.py
    ```
    - Or use the Kite Connect Python library:
    ```python
@@ -135,6 +143,50 @@ patterns = analyzer.analyze_patterns(data)
 print(patterns)
 ```
 
+### Historical Candles with CSV Export
+
+```python
+from src.data_fetcher import KiteConnectDataFetcher
+
+fetcher = KiteConnectDataFetcher()
+
+# Fetch minute candles for NSE-ACC (example from Kite Connect docs)
+instrument_token = 5633  # NSE-ACC
+from_datetime = "2017-12-15 09:15:00"
+to_datetime = "2017-12-15 09:20:00"
+interval = "minute"
+
+# This will fetch data and save as CSV in the data/ folder
+df = fetcher.fetchHistoricalCandles(
+    instrument_token=instrument_token,
+    from_datetime=from_datetime,
+    to_datetime=to_datetime,
+    interval=interval,
+    save_csv=True  # Automatically saves to data/ folder
+)
+
+print(f"Fetched {len(df)} candles")
+print(f"CSV file saved in data/ folder")
+```
+
+### SHA-256 Hash Generation
+
+```python
+from src.auth.token_generator import generate_sha256_hash, generate_sha256_hash_from_config
+
+# Generate hash with explicit values
+api_key = "your_api_key"
+request_token = "your_request_token"
+api_secret = "your_api_secret"
+
+hash_result = generate_sha256_hash(api_key, request_token, api_secret)
+print(f"SHA-256 Hash: {hash_result}")
+
+# Generate hash using config file credentials
+hash_from_config = generate_sha256_hash_from_config(request_token)
+print(f"SHA-256 Hash from config: {hash_from_config}")
+```
+
 ### Token Management
 
 ```python
@@ -162,6 +214,40 @@ python -m pytest tests/test_token_manager.py
 python -m pytest tests/ --cov=src
 ```
 
+### Example Scripts
+
+```bash
+# Run historical candles example
+python example_historical_candles.py
+
+# Run SHA-256 hash example
+python example_sha256.py
+
+# Run token generator with menu options
+python src/auth/token_generator.py
+```
+
+## API Endpoints
+
+### Historical Candles API
+
+The project supports the direct Kite Connect historical candles API endpoint:
+
+```
+GET https://api.kite.trade/instruments/historical/{instrument_token}/{interval}?from={from_datetime}&to={to_datetime}
+```
+
+Headers:
+- `X-Kite-Version: 3`
+- `Authorization: token {api_key}:{access_token}`
+
+Example:
+```bash
+curl "https://api.kite.trade/instruments/historical/5633/minute?from=2017-12-15+09:15:00&to=2017-12-15+09:20:00" \
+    -H "X-Kite-Version: 3" \
+    -H "Authorization: token api_key:access_token"
+```
+
 ## Candlestick Patterns Supported
 
 - **Doji**: Open and close prices are nearly equal
@@ -170,6 +256,15 @@ python -m pytest tests/ --cov=src
 - **Engulfing**: Bullish and Bearish engulfing patterns
 - **Morning Star**: Three-candle bullish reversal pattern
 - **Evening Star**: Three-candle bearish reversal pattern
+
+## Data Files
+
+CSV files are automatically generated in the `data/` folder with the naming convention:
+```
+{instrument_token}_{interval}_{from_datetime}_to_{to_datetime}.csv
+```
+
+Example: `5633_minute_20171215_091500_to_20171215_092000.csv`
 
 ## Contributing
 

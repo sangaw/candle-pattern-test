@@ -7,7 +7,7 @@ import pandas as pd
 from datetime import datetime
 from typing import Optional
 import logging
-from .auth import TokenManager
+from src.auth import TokenManager
 
 # Ensure logs directory exists
 os.makedirs('logs', exist_ok=True)
@@ -131,6 +131,114 @@ class KiteConnectDataFetcher:
             
         except Exception as e:
             logger.error(f"Error fetching historical data: {str(e)}")
+            logger.error(f"Error type: {type(e).__name__}")
+            return pd.DataFrame()
+
+    def fetchHistoricalCandles(self, instrument_token: int, from_datetime: str, to_datetime: str, interval: str = 'minute', save_csv: bool = True) -> pd.DataFrame:
+        """
+        Fetch historical candles using direct API endpoint with proper headers and optionally save as CSV.
+        
+        Args:
+            instrument_token (int): Instrument token (e.g., 5633 for NSE-ACC)
+            from_datetime (str): Start datetime in 'YYYY-MM-DD HH:MM:SS' format
+            to_datetime (str): End datetime in 'YYYY-MM-DD HH:MM:SS' format
+            interval (str): Candle interval (e.g., 'minute', '5minute', '15minute', '30minute', 'day')
+            save_csv (bool): Whether to save the fetched data as a CSV file in the 'data' directory
+        Returns:
+            pd.DataFrame: DataFrame with columns ['date', 'open', 'high', 'low', 'close', 'volume']
+        """
+        logger.info(f"Fetching historical candles for instrument {instrument_token} from {from_datetime} to {to_datetime} with interval: {interval}")
+        
+        try:
+            # Get a valid Kite Connect instance (with automatic token refresh)
+            logger.debug("Getting valid Kite Connect instance with token management")
+            kite = self.token_manager.get_valid_kite_instance()
+            
+            # Get current credentials
+            kite_config = self.config.get('kite_connect', {})
+            api_key = kite_config.get('api_key')
+            access_token = kite_config.get('access_token')
+            
+            if not api_key or not access_token:
+                logger.error("API key or access token not found in config")
+                raise ValueError("API key or access token not found in config")
+            
+            # Format datetime strings for URL (replace spaces with +)
+            from_formatted = from_datetime.replace(' ', '+')
+            to_formatted = to_datetime.replace(' ', '+')
+            
+            # Construct the API URL
+            base_url = "https://api.kite.trade"
+            url = f"{base_url}/instruments/historical/{instrument_token}/{interval}"
+            params = f"from={from_formatted}&to={to_formatted}"
+            full_url = f"{url}?{params}"
+            
+            logger.debug(f"API URL: {full_url}")
+            
+            # Set up headers
+            headers = {
+                "X-Kite-Version": "3",
+                "Authorization": f"token {api_key}:{access_token}"
+            }
+            
+            logger.debug(f"Making direct API call with headers: {headers}")
+            
+            # Make the API call using requests (imported in kiteconnect)
+            import requests
+            response = requests.get(full_url, headers=headers)
+            
+            # Check response status
+            if response.status_code != 200:
+                logger.error(f"API call failed with status {response.status_code}: {response.text}")
+                raise Exception(f"API call failed with status {response.status_code}")
+            
+            # Parse response
+            data = response.json()
+            logger.debug(f"API response status: {data.get('status')}")
+            
+            if data.get('status') != 'success':
+                logger.error(f"API returned error: {data}")
+                raise Exception(f"API returned error: {data}")
+            
+            # Extract candles data
+            candles = data.get('data', {}).get('candles', [])
+            logger.info(f"Successfully fetched {len(candles)} candles")
+            
+            if not candles:
+                logger.warning("No candles data returned")
+                return pd.DataFrame()
+            
+            # Convert to DataFrame
+            df = pd.DataFrame(candles, columns=['date', 'open', 'high', 'low', 'close', 'volume'])
+            
+            # Convert date strings to datetime
+            df['date'] = pd.to_datetime(df['date'])
+            
+            # Convert numeric columns
+            numeric_columns = ['open', 'high', 'low', 'close', 'volume']
+            for col in numeric_columns:
+                df[col] = pd.to_numeric(df[col], errors='coerce')
+            
+            logger.info(f"Processed {len(df)} candles with date range: {df['date'].min()} to {df['date'].max()}")
+            
+            if not df.empty:
+                logger.debug(f"Price range - Low: {df['low'].min():.2f}, High: {df['high'].max():.2f}")
+                logger.debug(f"Volume range - Min: {df['volume'].min()}, Max: {df['volume'].max()}")
+            
+            # Save as CSV if requested
+            if save_csv:
+                os.makedirs('data', exist_ok=True)
+                # Clean up file name
+                from_str = df['date'].min().strftime('%Y%m%d_%H%M%S') if not df.empty else from_datetime.replace(':', '').replace(' ', '_')
+                to_str = df['date'].max().strftime('%Y%m%d_%H%M%S') if not df.empty else to_datetime.replace(':', '').replace(' ', '_')
+                filename = f"data/{instrument_token}_{interval}_{from_str}_to_{to_str}.csv"
+                df.to_csv(filename, index=False)
+                logger.info(f"Saved candles data to {filename}")
+            
+            return df
+            
+        except Exception as e:
+            logger.error(f"Error fetching historical candles: {str(e)}")
             logger.error(f"Error type: {type(e).__name__}")
             return pd.DataFrame()
     

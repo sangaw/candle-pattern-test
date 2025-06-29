@@ -3,11 +3,62 @@ Token generator for Kite Connect API.
 """
 import json
 import os
+import hashlib
 from kiteconnect import KiteConnect
 from typing import Optional
 import logging
 
 logger = logging.getLogger(__name__)
+
+def generate_sha256_hash(api_key: str, request_token: str, api_secret: str) -> str:
+    """
+    Generate SHA-256 hash of concatenated api_key + request_token + api_secret.
+    
+    Args:
+        api_key (str): The API key
+        request_token (str): The request token
+        api_secret (str): The API secret
+        
+    Returns:
+        str: SHA-256 hash in hexadecimal format
+    """
+    # Concatenate the three values
+    concatenated = api_key + request_token + api_secret
+    logger.debug(f"Concatenated string length: {len(concatenated)}")
+    logger.debug(f"API key: {api_key[:8]}..., Request token: {request_token[:8]}..., API secret: {api_secret[:8]}...")
+    
+    # Generate SHA-256 hash
+    hash_object = hashlib.sha256(concatenated.encode('utf-8'))
+    hash_hex = hash_object.hexdigest()
+    
+    logger.debug(f"Generated SHA-256 hash: {hash_hex}")
+    return hash_hex
+
+def generate_sha256_hash_from_config(request_token: str) -> Optional[str]:
+    """
+    Generate SHA-256 hash using credentials from config file.
+    
+    Args:
+        request_token (str): The request token
+        
+    Returns:
+        str: SHA-256 hash in hexadecimal format, or None if error
+    """
+    logger.info("Generating SHA-256 hash from config credentials")
+    try:
+        kite_config = load_kite_config()
+        api_key = kite_config.get('api_key')
+        api_secret = kite_config.get('api_secret')
+        
+        if not api_key or not api_secret:
+            logger.error("API key or secret not found in config")
+            raise ValueError("API key or secret not found in config")
+            
+        return generate_sha256_hash(api_key, request_token, api_secret)
+        
+    except Exception as e:
+        logger.error(f"Error generating SHA-256 hash from config: {str(e)}")
+        return None
 
 def load_kite_config() -> dict:
     """
@@ -113,7 +164,7 @@ def main():
     """
     Command-line interface for token generation.
     """
-    print("Kite Connect Access Token Generator")
+    print("Kite Connect Token Generator")
     print("=" * 40)
     
     try:
@@ -122,6 +173,18 @@ def main():
         print(f"API Key: {kite_config.get('api_key', 'Not found')}")
         print()
         
+        # Show menu options
+        print("Choose an option:")
+        print("1. Generate Access Token")
+        print("2. Generate SHA-256 Hash")
+        print("3. Both")
+        
+        choice = input("\nEnter your choice (1/2/3): ").strip()
+        
+        if choice not in ['1', '2', '3']:
+            print("Invalid choice. Please enter 1, 2, or 3.")
+            return
+            
         # Get request token from user
         request_token = input("Enter your request token: ").strip()
         
@@ -130,33 +193,47 @@ def main():
             print("No request token provided.")
             return
             
-        logger.info("Request token received, generating access token")
+        logger.info("Request token received")
         
-        # Generate access token
-        access_token = generate_access_token(request_token)
-        
-        if access_token:
-            print(f"\nAccess Token: {access_token}")
-            logger.info("Access token generated successfully in CLI")
+        # Generate SHA-256 hash if requested
+        if choice in ['2', '3']:
+            print("\n" + "="*20 + " SHA-256 Hash " + "="*20)
+            hash_result = generate_sha256_hash_from_config(request_token)
             
-            # Ask if user wants to update config
-            update_config = input("\nUpdate config/local-settings.json with this token? (y/n): ").strip().lower()
-            
-            if update_config == 'y':
-                logger.info("User chose to update configuration")
-                if update_config_with_token(access_token):
-                    print("✓ Configuration updated successfully!")
-                    logger.info("Configuration updated successfully via CLI")
-                else:
-                    print("✗ Failed to update configuration")
-                    logger.error("Failed to update configuration via CLI")
+            if hash_result:
+                print(f"SHA-256 Hash: {hash_result}")
+                logger.info("SHA-256 hash generated successfully in CLI")
             else:
-                print("\nUpdate your config/local-settings.json manually with:")
-                print(f'"access_token": "{access_token}"')
-                logger.info("User chose manual configuration update")
-        else:
-            print("✗ Failed to generate access token")
-            logger.error("Failed to generate access token in CLI")
+                print("✗ Failed to generate SHA-256 hash")
+                logger.error("Failed to generate SHA-256 hash in CLI")
+        
+        # Generate access token if requested
+        if choice in ['1', '3']:
+            print("\n" + "="*20 + " Access Token " + "="*20)
+            access_token = generate_access_token(request_token)
+            
+            if access_token:
+                print(f"Access Token: {access_token}")
+                logger.info("Access token generated successfully in CLI")
+                
+                # Ask if user wants to update config
+                update_config = input("\nUpdate config/local-settings.json with this token? (y/n): ").strip().lower()
+                
+                if update_config == 'y':
+                    logger.info("User chose to update configuration")
+                    if update_config_with_token(access_token):
+                        print("✓ Configuration updated successfully!")
+                        logger.info("Configuration updated successfully via CLI")
+                    else:
+                        print("✗ Failed to update configuration")
+                        logger.error("Failed to update configuration via CLI")
+                else:
+                    print("\nUpdate your config/local-settings.json manually with:")
+                    print(f'"access_token": "{access_token}"')
+                    logger.info("User chose manual configuration update")
+            else:
+                print("✗ Failed to generate access token")
+                logger.error("Failed to generate access token in CLI")
             
     except Exception as e:
         print(f"Error: {str(e)}")

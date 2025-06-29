@@ -51,4 +51,30 @@ def test_historical_data_with_token_manager():
     assert (df['open'] > 0).all()
     assert (df['high'] > 0).all()
     assert (df['low'] > 0).all()
-    assert (df['close'] > 0).all() 
+    assert (df['close'] > 0).all()
+
+def test_sha256_hash_generation():
+    """Test SHA-256 hash generation functionality."""
+    from src.auth.token_generator import generate_sha256_hash
+    
+    # Test with sample values
+    api_key = "test_api_key_123"
+    request_token = "test_request_token_456"
+    api_secret = "test_api_secret_789"
+    
+    # Generate hash
+    hash_result = generate_sha256_hash(api_key, request_token, api_secret)
+    
+    # Verify it's a valid SHA-256 hash (64 characters, hexadecimal)
+    assert len(hash_result) == 64
+    assert all(c in '0123456789abcdef' for c in hash_result)
+    
+    # Verify it's deterministic (same input should produce same output)
+    hash_result2 = generate_sha256_hash(api_key, request_token, api_secret)
+    assert hash_result == hash_result2
+    
+    # Verify different inputs produce different hashes
+    different_hash = generate_sha256_hash(api_key + "different", request_token, api_secret)
+    assert hash_result != different_hash
+    
+    print(f"✓ SHA-256 hash test passed. Sample hash: {hash_result[:16]}...") 

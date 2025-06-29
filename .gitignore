@@ -145,8 +145,7 @@ ehthumbs.db
 Thumbs.db
 
 # Project specific
-data/
-*.csv
+data/*.csv
 *.json
 logs/
 config/local-settings.json 
