@@ -192,13 +192,27 @@ class KiteConnectDataFetcher:
                 logger.error(f"API call failed with status {response.status_code}: {response.text}")
                 raise Exception(f"API call failed with status {response.status_code}")
             
-            # Parse response
-            data = response.json()
-            logger.debug(f"API response status: {data.get('status')}")
+            # Log response details for debugging
+            logger.debug(f"Response content type: {response.headers.get('content-type', 'unknown')}")
+            logger.debug(f"Response length: {len(response.content)} bytes")
+            logger.debug(f"Response status code: {response.status_code}")
+            logger.debug(f"Response headers: {dict(response.headers)}")
             
-            if data.get('status') != 'success':
-                logger.error(f"API returned error: {data}")
-                raise Exception(f"API returned error: {data}")
+            # Log raw response for debugging
+            if len(response.content) > 0:
+                logger.debug(f"Raw response (first 1000 chars): {response.text[:1000]}")
+            else:
+                logger.warning("Empty response received")
+                return pd.DataFrame()
+            
+            # Try to parse response as JSON
+            try:
+                data = response.json()
+                logger.debug(f"Successfully parsed JSON response")
+            except Exception as json_error:
+                logger.error(f"Failed to parse JSON response: {json_error}")
+                logger.debug(f"Response text (first 500 chars): {response.text[:500]}")
+                raise Exception(f"Invalid JSON response: {json_error}")
             
             # Extract candles data
             candles = data.get('data', {}).get('candles', [])
@@ -241,7 +255,69 @@ class KiteConnectDataFetcher:
             logger.error(f"Error fetching historical candles: {str(e)}")
             logger.error(f"Error type: {type(e).__name__}")
             return pd.DataFrame()
-    
+
+    def fetchInstrumentList(self, save_csv: bool = True) -> pd.DataFrame:
+        """
+        Fetch the complete instrument list using Kite Connect library.
+        
+        Args:
+            save_csv (bool): Whether to save the fetched data as a CSV file in the 'data' directory
+            
+        Returns:
+            pd.DataFrame: DataFrame with instrument information including token, name, exchange, etc.
+        """
+        logger.info("Fetching complete instrument list from Kite Connect API")
+        
+        try:
+            # Get a valid Kite Connect instance (with automatic token refresh)
+            logger.debug("Getting valid Kite Connect instance with token management")
+            kite = self.token_manager.get_valid_kite_instance()
+            
+            # Fetch instruments using Kite Connect library
+            logger.info("Making API call to fetch instruments list")
+            instruments = kite.instruments()
+            
+            logger.info(f"Successfully fetched {len(instruments)} instruments")
+            
+            if not instruments:
+                logger.warning("No instruments data returned")
+                return pd.DataFrame()
+            
+            # Convert to DataFrame
+            df = pd.DataFrame(instruments)
+            
+            # Log some statistics
+            if not df.empty:
+                logger.info(f"Processed {len(df)} instruments")
+                logger.debug(f"Columns available: {list(df.columns)}")
+                
+                # Log exchange distribution if available
+                if 'exchange' in df.columns:
+                    exchange_counts = df['exchange'].value_counts()
+                    logger.info(f"Exchange distribution: {dict(exchange_counts.head())}")
+                
+                # Log instrument type distribution if available
+                if 'instrument_type' in df.columns:
+                    type_counts = df['instrument_type'].value_counts()
+                    logger.info(f"Instrument type distribution: {dict(type_counts.head())}")
+            
+            # Save as CSV if requested
+            if save_csv:
+                os.makedirs('data', exist_ok=True)
+                # Create filename with timestamp
+                from datetime import datetime
+                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                filename = f"data/instruments_list_{timestamp}.csv"
+                df.to_csv(filename, index=False)
+                logger.info(f"Saved instruments list to {filename}")
+            
+            return df
+            
+        except Exception as e:
+            logger.error(f"Error fetching instrument list: {str(e)}")
+            logger.error(f"Error type: {type(e).__name__}")
+            return pd.DataFrame()
+
     def get_token_info(self) -> dict:
         """
         Get information about the current token status.

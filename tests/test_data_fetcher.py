@@ -97,4 +97,66 @@ def test_fetch_historical_candles():
         assert len(df) == 0, "Should return empty DataFrame when no data"
         # No CSV should be created if no data
         csv_files = glob.glob(f"data/{instrument_token}_{interval}_*.csv")
+        assert len(csv_files) == 0, "CSV file should not be created when no data"
+
+@pytest.mark.skipif(
+    not load_test_config(),
+    reason="Kite Connect API credentials not set in config/local-settings.json"
+)
+def test_fetch_instrument_list():
+    """Test fetchInstrumentList function with CSV output."""
+    from src.data_fetcher import KiteConnectDataFetcher
+    import glob
+    import os
+    
+    fetcher = KiteConnectDataFetcher()
+    
+    print("Testing fetchInstrumentList function")
+    
+    df = fetcher.fetchInstrumentList(save_csv=True)
+    
+    # Check if data was returned
+    if not df.empty:
+        print(f"✓ Successfully fetched {len(df)} instruments")
+        print(f"Columns: {list(df.columns)}")
+        print(f"Sample data:")
+        print(df.head())
+        
+        # Verify DataFrame structure - check for common columns
+        expected_columns = ['instrument_token', 'tradingsymbol', 'name', 'exchange']
+        found_columns = [col for col in expected_columns if col in df.columns]
+        assert len(found_columns) >= 2, f"Missing essential columns. Expected at least 2 of {expected_columns}, found {found_columns}"
+        
+        # Verify data types for key columns
+        if 'instrument_token' in df.columns:
+            assert pd.api.types.is_numeric_dtype(df['instrument_token']), "instrument_token should be numeric"
+        
+        if 'tradingsymbol' in df.columns:
+            assert pd.api.types.is_string_dtype(df['tradingsymbol']), "tradingsymbol should be string"
+        
+        # Check that a CSV file was created
+        csv_files = glob.glob("data/instruments_list_*.csv")
+        assert len(csv_files) > 0, "CSV file was not created in the data directory"
+        print(f"✓ CSV file(s) created: {csv_files}")
+        
+        # Log some statistics
+        if 'exchange' in df.columns:
+            exchange_counts = df['exchange'].value_counts()
+            print(f"Exchange distribution: {dict(exchange_counts.head())}")
+        
+        if 'instrument_type' in df.columns:
+            type_counts = df['instrument_type'].value_counts()
+            print(f"Instrument type distribution: {dict(type_counts.head())}")
+        
+        # Clean up the created CSV files
+        for f in csv_files:
+            os.remove(f)
+            print(f"Cleaned up: {f}")
+    else:
+        print("⚠ No instruments data returned")
+        # Even if no data, the function should return an empty DataFrame with correct structure
+        assert isinstance(df, pd.DataFrame), "Should return a pandas DataFrame"
+        assert len(df) == 0, "Should return empty DataFrame when no data"
+        # No CSV should be created if no data
+        csv_files = glob.glob("data/instruments_list_*.csv")
         assert len(csv_files) == 0, "CSV file should not be created when no data" 

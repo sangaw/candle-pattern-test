@@ -29,7 +29,8 @@ candle-pattern-test/
 │   └── examples/          # Example scripts
 │       ├── __init__.py
 │       ├── example_historical_candles.py  # Example for historical candles
-│       └── example_sha256.py     # Example for SHA-256 hash generation
+│       ├── example_sha256.py     # Example for SHA-256 hash generation
+│       └── example_instrument_list.py  # Example for instrument list
 ├── tests/                 # Test package
 │   ├── __init__.py
 │   ├── test_data_fetcher.py
@@ -49,6 +50,7 @@ candle-pattern-test/
 
 - **Data Fetching**: Retrieve NIFTY historical and intraday OHLCV data (via Kite Connect)
 - **Historical Candles API**: Direct API endpoint access with proper headers
+- **Instrument List**: Fetch complete instrument list with tokens and metadata
 - **CSV Data Export**: Automatically save fetched data as CSV files
 - **SHA-256 Hash Generation**: Generate hashes for API authentication
 - **Pattern Recognition**: Identify common candlestick patterns
@@ -145,6 +147,25 @@ patterns = analyzer.analyze_patterns(data)
 print(patterns)
 ```
 
+### Instrument List
+
+```python
+from src.data_fetcher import KiteConnectDataFetcher
+
+fetcher = KiteConnectDataFetcher()
+
+# Fetch complete instrument list
+df = fetcher.fetchInstrumentList(save_csv=True)
+
+print(f"Fetched {len(df)} instruments")
+print(f"Exchanges: {df['exchange'].value_counts().to_dict()}")
+print(f"Instrument types: {df['instrument_type'].value_counts().to_dict()}")
+
+# Search for specific instruments
+nifty_instruments = df[df['tradingsymbol'].str.contains('NIFTY', case=False)]
+print(f"NIFTY instruments: {len(nifty_instruments)}")
+```
+
 ### Historical Candles with CSV Export
 
 ```python
@@ -224,6 +245,9 @@ python -m src.examples.example_historical_candles
 
 # Run SHA-256 hash example
 python -m src.examples.example_sha256
+
+# Run instrument list example
+python -m src.examples.example_instrument_list
 
 # Run token generator with menu options
 python src/auth/token_generator.py
