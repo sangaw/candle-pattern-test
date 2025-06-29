@@ -159,4 +159,76 @@ def test_fetch_instrument_list():
         assert len(df) == 0, "Should return empty DataFrame when no data"
         # No CSV should be created if no data
         csv_files = glob.glob("data/instruments_list_*.csv")
-        assert len(csv_files) == 0, "CSV file should not be created when no data" 
+        assert len(csv_files) == 0, "CSV file should not be created when no data"
+
+@pytest.mark.skipif(
+    not load_test_config(),
+    reason="Kite Connect API credentials not set in config/local-settings.json"
+)
+def test_fetch_daily_candles_for_instruments():
+    """Test fetchDailyCandlesForInstruments function with instrument list configuration."""
+    from src.data_fetcher import KiteConnectDataFetcher
+    import glob
+    import os
+    
+    fetcher = KiteConnectDataFetcher()
+    
+    # Use a recent date range for testing
+    from datetime import datetime, timedelta
+    to_date = datetime.now().date() - timedelta(days=1)  # Yesterday
+    from_date = to_date - timedelta(days=7)  # 7 days before yesterday
+    
+    print(f"Testing fetchDailyCandlesForInstruments from {from_date} to {to_date}")
+    
+    results = fetcher.fetchDailyCandlesForInstruments(
+        from_date=str(from_date), 
+        to_date=str(to_date)
+    )
+    
+    # Check if results were returned
+    if results:
+        print(f"✓ Successfully fetched data for {len(results)} instruments")
+        
+        for instrument_name, df in results.items():
+            print(f"  - {instrument_name}: {len(df)} candles")
+            print(f"    Date range: {df['date'].min()} to {df['date'].max()}")
+            print(f"    Price range: {df['low'].min():.2f} - {df['high'].max():.2f}")
+            
+            # Verify DataFrame structure
+            expected_columns = ['date', 'open', 'high', 'low', 'close', 'volume']
+            assert all(col in df.columns for col in expected_columns), f"Missing columns for {instrument_name}"
+            
+            # Verify data types
+            assert pd.api.types.is_datetime64_any_dtype(df['date']), f"Date column should be datetime for {instrument_name}"
+            assert pd.api.types.is_numeric_dtype(df['open']), f"Open column should be numeric for {instrument_name}"
+            assert pd.api.types.is_numeric_dtype(df['high']), f"High column should be numeric for {instrument_name}"
+            assert pd.api.types.is_numeric_dtype(df['low']), f"Low column should be numeric for {instrument_name}"
+            assert pd.api.types.is_numeric_dtype(df['close']), f"Close column should be numeric for {instrument_name}"
+            assert pd.api.types.is_numeric_dtype(df['volume']), f"Volume column should be numeric for {instrument_name}"
+            
+            # Verify data integrity
+            assert (df['high'] >= df['low']).all(), f"High should be >= Low for {instrument_name}"
+            assert (df['high'] >= df['open']).all(), f"High should be >= Open for {instrument_name}"
+            assert (df['high'] >= df['close']).all(), f"High should be >= Close for {instrument_name}"
+            assert (df['low'] <= df['open']).all(), f"Low should be <= Open for {instrument_name}"
+            assert (df['low'] <= df['close']).all(), f"Low should be <= Close for {instrument_name}"
+            assert (df['volume'] >= 0).all(), f"Volume should be >= 0 for {instrument_name}"
+        
+        # Check that CSV files were created for each instrument
+        csv_files = glob.glob(f"data/*_{from_date}_to_{to_date}_*.csv")
+        assert len(csv_files) >= len(results), f"Expected at least {len(results)} CSV files, found {len(csv_files)}"
+        print(f"✓ CSV files created: {csv_files}")
+        
+        # Clean up the created CSV files
+        for f in csv_files:
+            os.remove(f)
+            print(f"Cleaned up: {f}")
+            
+    else:
+        print("⚠ No data returned for any instruments")
+        # Even if no data, the function should return an empty dict
+        assert isinstance(results, dict), "Should return a dictionary"
+        assert len(results) == 0, "Should return empty dictionary when no data"
+        # No CSV should be created if no data
+        csv_files = glob.glob(f"data/*_{from_date}_to_{to_date}_*.csv")
+        assert len(csv_files) == 0, "CSV files should not be created when no data" 

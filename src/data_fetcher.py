@@ -305,7 +305,6 @@ class KiteConnectDataFetcher:
             if save_csv:
                 os.makedirs('data', exist_ok=True)
                 # Create filename with timestamp
-                from datetime import datetime
                 timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
                 filename = f"data/instruments_list_{timestamp}.csv"
                 df.to_csv(filename, index=False)
@@ -315,6 +314,160 @@ class KiteConnectDataFetcher:
             
         except Exception as e:
             logger.error(f"Error fetching instrument list: {str(e)}")
+            logger.error(f"Error type: {type(e).__name__}")
+            return pd.DataFrame()
+
+    def fetchDailyCandlesForInstruments(self, from_date: str, to_date: str, instruments_config_path: str = 'config/instrumentlist.json') -> dict:
+        """
+        Fetch daily candles for specific instruments listed in the config file.
+        
+        Args:
+            from_date (str): Start date in 'YYYY-MM-DD' format
+            to_date (str): End date in 'YYYY-MM-DD' format
+            instruments_config_path (str): Path to the instruments configuration file
+            
+        Returns:
+            dict: Dictionary with instrument names as keys and DataFrames as values
+        """
+        logger.info(f"Fetching daily candles for instruments from {from_date} to {to_date}")
+        
+        try:
+            # Load instruments configuration
+            logger.debug(f"Loading instruments configuration from {instruments_config_path}")
+            with open(instruments_config_path, 'r') as f:
+                config = json.load(f)
+            
+            instruments_list = config.get('instruments', [])
+            default_settings = config.get('default_settings', {})
+            
+            logger.info(f"Found {len(instruments_list)} instruments in configuration")
+            
+            # Fetch complete instrument list to get tokens
+            logger.info("Fetching complete instrument list to find tokens")
+            all_instruments_df = self.fetchInstrumentList(save_csv=False)
+            
+            if all_instruments_df.empty:
+                logger.error("Failed to fetch instrument list")
+                return {}
+            
+            results = {}
+            
+            # Process each instrument in the config
+            for instrument_config in instruments_list:
+                instrument_name = instrument_config['name']
+                exchange = instrument_config.get('exchange', 'NSE')
+                instrument_type = instrument_config.get('instrument_type', 'EQ')
+                
+                logger.info(f"Processing instrument: {instrument_name} ({exchange}, {instrument_type})")
+                
+                # Find the instrument token
+                instrument_df = all_instruments_df[
+                    (all_instruments_df['tradingsymbol'].str.contains(instrument_name, case=False, na=False)) &
+                    (all_instruments_df['exchange'] == exchange) &
+                    (all_instruments_df['instrument_type'] == instrument_type)
+                ]
+                
+                if instrument_df.empty:
+                    logger.warning(f"No instrument found for {instrument_name} ({exchange}, {instrument_type})")
+                    continue
+                
+                # Get the first matching instrument (usually the main one)
+                instrument_token = instrument_df.iloc[0]['instrument_token']
+                trading_symbol = instrument_df.iloc[0]['tradingsymbol']
+                
+                logger.info(f"Found instrument token {instrument_token} for {trading_symbol}")
+                
+                # Fetch daily candles for this instrument
+                try:
+                    df = self.get_historical_data_for_instrument(
+                        instrument_token=instrument_token,
+                        from_date=from_date,
+                        to_date=to_date,
+                        interval=default_settings.get('interval', 'day'),
+                        save_csv=default_settings.get('save_csv', True),
+                        instrument_name=instrument_name
+                    )
+                    
+                    if not df.empty:
+                        results[instrument_name] = df
+                        logger.info(f"Successfully fetched {len(df)} candles for {instrument_name}")
+                    else:
+                        logger.warning(f"No data returned for {instrument_name}")
+                        
+                except Exception as e:
+                    logger.error(f"Error fetching data for {instrument_name}: {str(e)}")
+                    continue
+            
+            logger.info(f"Successfully processed {len(results)} instruments")
+            return results
+            
+        except Exception as e:
+            logger.error(f"Error in fetchDailyCandlesForInstruments: {str(e)}")
+            logger.error(f"Error type: {type(e).__name__}")
+            return {}
+
+    def get_historical_data_for_instrument(self, instrument_token: int, from_date: str, to_date: str, 
+                                         interval: str = 'day', save_csv: bool = True, 
+                                         instrument_name: str = None) -> pd.DataFrame:
+        """
+        Fetch historical OHLC data for a specific instrument with automatic token refresh.
+        
+        Args:
+            instrument_token (int): Instrument token
+            from_date (str): Start date in 'YYYY-MM-DD' format
+            to_date (str): End date in 'YYYY-MM-DD' format
+            interval (str): Candle interval (e.g., 'day', 'minute', '5minute')
+            save_csv (bool): Whether to save the fetched data as a CSV file
+            instrument_name (str): Name of the instrument for file naming
+            
+        Returns:
+            pd.DataFrame: DataFrame with columns ['date', 'open', 'high', 'low', 'close', 'volume']
+        """
+        logger.info(f"Fetching historical data for instrument {instrument_token} from {from_date} to {to_date} with interval: {interval}")
+        
+        try:
+            # Get a valid Kite Connect instance (with automatic token refresh)
+            logger.debug("Getting valid Kite Connect instance with token management")
+            kite = self.token_manager.get_valid_kite_instance()
+            
+            # Parse dates
+            from_dt = datetime.strptime(from_date, '%Y-%m-%d')
+            to_dt = datetime.strptime(to_date, '%Y-%m-%d')
+            logger.debug(f"Parsed dates - From: {from_dt}, To: {to_dt}")
+            
+            # Fetch historical data
+            logger.info(f"Making API call to fetch {interval} candles for instrument {instrument_token}")
+            data = kite.historical_data(
+                instrument_token=instrument_token,
+                from_date=from_dt,
+                to_date=to_dt,
+                interval=interval
+            )
+            
+            # Convert to DataFrame
+            df = pd.DataFrame(data)
+            logger.info(f"Successfully fetched {len(df)} candles for instrument {instrument_token} from {from_date} to {to_date}")
+            
+            if not df.empty:
+                logger.debug(f"Data sample - Date range: {df['date'].min()} to {df['date'].max()}")
+                logger.debug(f"Price range - Low: {df['low'].min():.2f}, High: {df['high'].max():.2f}")
+                logger.debug(f"Volume range - Min: {df['volume'].min()}, Max: {df['volume'].max()}")
+                
+                # Save as CSV if requested
+                if save_csv:
+                    os.makedirs('data', exist_ok=True)
+                    # Create filename with instrument name, date range, and run date
+                    run_date = datetime.now().strftime('%Y%m%d_%H%M%S')
+                    filename = f"data/{instrument_name}_{from_date}_to_{to_date}_{run_date}.csv"
+                    df.to_csv(filename, index=False)
+                    logger.info(f"Saved candles data to {filename}")
+            else:
+                logger.warning("No data returned from API call")
+            
+            return df
+            
+        except Exception as e:
+            logger.error(f"Error fetching historical data for instrument {instrument_token}: {str(e)}")
             logger.error(f"Error type: {type(e).__name__}")
             return pd.DataFrame()
 

@@ -1,6 +1,99 @@
 # NIFTY Candlestick Pattern Tester
 
-A Python project to analyze and test candlestick patterns for NIFTY (National Stock Exchange of India) data.
+This project analyzes NIFTY and other instrument candlestick patterns using the Kite Connect API. It supports robust data fetching, token management, SHA-256 hashing, CSV export, and comprehensive examples and tests for NIFTY candlestick pattern analysis.
+
+## Features
+- Fetch historical OHLC (Open, High, Low, Close) data for NIFTY and any instrument on Kite Connect
+- Automatic token management and refresh for Kite Connect API
+- SHA-256 hash generation for secure API authentication
+- Save fetched data as CSV files in the `data/` folder
+- Fetch and export the complete instrument list from Kite Connect
+- Fetch daily candles for a configurable list of instruments
+- Detailed logging to `logs/data_fetcher.log`
+- Example scripts for all major features
+- Comprehensive tests
+
+## Project Structure
+```
+candle-pattern-test/
+├── config/
+│   └── instrumentlist.json   # List of instruments to fetch daily candles for
+├── data/                    # All fetched CSV data is saved here
+├── logs/
+│   └── data_fetcher.log     # Log file for all data fetching operations
+├── src/
+│   ├── auth/                # Token management and authentication
+│   ├── examples/            # Example scripts
+│   ├── candlestick_patterns.py
+│   ├── data_fetcher.py      # Main data fetching logic
+│   └── utils.py
+├── tests/                   # Test suite
+├── requirements.txt
+└── README.md
+```
+
+## Configuration
+
+### Instrument List
+Edit `config/instrumentlist.json` to specify which instruments to fetch daily candles for. Example:
+```json
+{
+  "instruments": [
+    { "name": "NIFTY", "description": "NIFTY 50 Index", "exchange": "NSE", "instrument_type": "EQ" },
+    { "name": "BANKNIFTY", "description": "NIFTY Bank Index", "exchange": "NSE", "instrument_type": "EQ" },
+    { "name": "INFY", "description": "Infosys Limited", "exchange": "NSE", "instrument_type": "EQ" },
+    { "name": "RELIANCE", "description": "Reliance Industries Limited", "exchange": "NSE", "instrument_type": "EQ" }
+  ],
+  "default_settings": {
+    "interval": "day",
+    "save_csv": true,
+    "date_format": "%Y-%m-%d"
+  }
+}
+```
+
+### API Credentials
+Set up your Kite Connect API credentials in `config/local-settings.json` as described in the earlier sections.
+
+## Usage
+
+### Fetch Daily Candles for Configured Instruments
+Run the example script:
+```bash
+python -m src.examples.example_daily_candles
+```
+This will fetch daily candles for all instruments listed in `config/instrumentlist.json` for the last 30 days and save them as CSV files in the `data/` folder. The script prints a summary for each instrument.
+
+### Fetch Complete Instrument List
+Run:
+```bash
+python -m src.examples.example_instrument_list
+```
+
+### Logging
+All data fetching operations are logged to `logs/data_fetcher.log`. The log includes:
+- API calls and responses
+- Token management events
+- Errors and warnings
+- File save operations
+
+## Tests
+Run all tests with:
+```bash
+pytest
+```
+
+## Example Output
+CSV files are saved in the `data/` folder with names like:
+```
+NIFTY_2025-05-29_to_2025-06-28_20250629_205543.csv
+BANKNIFTY_2025-05-29_to_2025-06-28_20250629_205544.csv
+RELIANCE_2025-05-29_to_2025-06-28_20250629_205547.csv
+```
+
+## Notes
+- If an instrument is not found, check the exact trading symbol in the instrument list (e.g., "INFY" for Infosys).
+- The project is designed for extensibility—add more instruments or features as needed!
 
 ## Project Overview
 
