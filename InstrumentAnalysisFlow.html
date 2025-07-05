@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instrument Analysis AI Agent Flow</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+        .mermaid {
+            text-align: center;
+            margin: 20px 0;
+            padding: 20px;
+            background-color: #fafafa;
+            border-radius: 8px;
+        }
+        .description {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #e8f4f8;
+            border-radius: 8px;
+            border-left: 4px solid #3498db;
+        }
+        .phase-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+        .phase-card {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #e74c3c;
+        }
+        .phase-card h3 {
+            color: #2c3e50;
+            margin-top: 0;
+        }
+        .phase-card.phase1 {
+            border-left-color: #3498db;
+        }
+        .phase-card.phase2 {
+            border-left-color: #9b59b6;
+        }
+        .phase-card.phase3 {
+            border-left-color: #27ae60;
+        }
+        .tools-section {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #fff3cd;
+            border-radius: 8px;
+            border-left: 4px solid #ffc107;
+        }
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .tool-item {
+            background-color: white;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #dee2e6;
+            text-align: center;
+        }
+        .tool-item strong {
+            color: #495057;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 Instrument Analysis AI Agent Flow</h1>
+        
+        <div class="mermaid">
+            graph TD
+                A[User Input: Instrument Name] --> B[AI Agent: Parse & Understand]
+                B --> C[Search Instrument List]
+                C --> D[Filter & Rank Results]
+                D --> E[Present Options to User]
+                E --> F[User Selects Instruments]
+                F --> G[AI Agent: Validate Selection]
+                G --> H[Fetch OHLC Data via KiteConnect]
+                H --> I[Store as CSV Files]
+                I --> J[AI Agent: Confirm Success]
+                J --> K[Offer Analysis Options]
+                K --> L[User Chooses Analysis Type]
+                L --> M[Execute Analysis]
+                M --> N[Present Results]
+                N --> O[Store Analysis Results]
+                O --> P[End or Continue Loop]
+
+                subgraph "Phase 1: Instrument Discovery"
+                    A
+                    B
+                    C
+                    D
+                    E
+                    F
+                end
+
+                subgraph "Phase 2: Data Fetching"
+                    G
+                    H
+                    I
+                    J
+                end
+
+                subgraph "Phase 3: Analysis & Results"
+                    K
+                    L
+                    M
+                    N
+                    O
+                end
+
+                subgraph "AI Agent Tools"
+                    T1[Search Instruments Tool]
+                    T2[Fetch OHLC Data Tool]
+                    T3[Pattern Analysis Tool]
+                    T4[Visualization Tool]
+                    T5[Report Generation Tool]
+                end
+
+                C --> T1
+                H --> T2
+                M --> T3
+                M --> T4
+                M --> T5
+
+                %% Styling
+                classDef phase1 fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+                classDef phase2 fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+                classDef phase3 fill:#e8f5e8,stroke:#1b5e20,stroke-width:2px
+                classDef tools fill:#fff3e0,stroke:#e65100,stroke-width:2px
+                classDef user fill:#ffebee,stroke:#c62828,stroke-width:2px
+                classDef ai fill:#f1f8e9,stroke:#33691e,stroke-width:2px
+
+                class A,F,L,P user
+                class B,G,J,K,M,N,O ai
+                class T1,T2,T3,T4,T5 tools
+        </div>
+
+        <div class="description">
+            <h2>📋 Flow Description</h2>
+            <p>This diagram shows the complete AI agent orchestration flow for instrument analysis. The process is divided into three main phases, each with specific steps and AI agent tools that work together to provide a seamless analysis experience.</p>
+        </div>
+
+        <div class="phase-info">
+            <div class="phase-card phase1">
+                <h3>🔍 Phase 1: Instrument Discovery</h3>
+                <ul>
+                    <li><strong>User Input:</strong> Natural language instrument request</li>
+                    <li><strong>AI Parsing:</strong> Understand context and extract search terms</li>
+                    <li><strong>Search:</strong> Find relevant instruments across exchanges</li>
+                    <li><strong>Filter & Rank:</strong> Sort by relevance and importance</li>
+                    <li><strong>Present:</strong> Show user-friendly options</li>
+                    <li><strong>Selection:</strong> User chooses specific instruments</li>
+                </ul>
+            </div>
+
+            <div class="phase-card phase2">
+                <h3>📊 Phase 2: Data Fetching</h3>
+                <ul>
+                    <li><strong>Validation:</strong> Verify selected instruments exist</li>
+                    <li><strong>Setup:</strong> Prepare API calls and parameters</li>
+                    <li><strong>Fetch:</strong> Retrieve OHLC data via KiteConnect</li>
+                    <li><strong>Store:</strong> Save data as timestamped CSV files</li>
+                    <li><strong>Confirm:</strong> Report success and data summary</li>
+                </ul>
+            </div>
+
+            <div class="phase-card phase3">
+                <h3>🎯 Phase 3: Analysis & Results</h3>
+                <ul>
+                    <li><strong>Options:</strong> Present analysis choices to user</li>
+                    <li><strong>Selection:</strong> User chooses analysis type</li>
+                    <li><strong>Execute:</strong> Run selected analysis algorithms</li>
+                    <li><strong>Present:</strong> Display results in user-friendly format</li>
+                    <li><strong>Store:</strong> Save analysis results for future use</li>
+                    <li><strong>Continue:</strong> Offer additional analysis options</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="tools-section">
+            <h3>🛠️ AI Agent Tools</h3>
+            <p>The AI agent uses five specialized tools to orchestrate the entire analysis process:</p>
+            
+            <div class="tools-grid">
+                <div class="tool-item">
+                    <strong>🔍 Search Instruments Tool</strong><br>
+                    Finds relevant instruments by name, symbol, or description
+                </div>
+                <div class="tool-item">
+                    <strong>📈 Fetch OHLC Data Tool</strong><br>
+                    Retrieves historical price data via KiteConnect API
+                </div>
+                <div class="tool-item">
+                    <strong>📊 Pattern Analysis Tool</strong><br>
+                    Identifies candlestick patterns and technical indicators
+                </div>
+                <div class="tool-item">
+                    <strong>📱 Visualization Tool</strong><br>
+                    Creates interactive charts and data visualizations
+                </div>
+                <div class="tool-item">
+                    <strong>📋 Report Generation Tool</strong><br>
+                    Produces comprehensive analysis reports
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true,
+                curve: 'basis'
+            }
+        });
+    </script>
+</body>
+</html> 

@@ -38,7 +38,7 @@ class CandlestickPatternAnalyzer:
             data (pd.DataFrame): OHLC data with columns ['Date', 'Open', 'High', 'Low', 'Close']
             
         Returns:
-            pd.DataFrame: Original data with pattern columns added
+            pd.DataFrame: Original data with a single 'pattern' column added
         """
         if data.empty:
             logger.warning("Empty data provided for pattern analysis")
@@ -48,97 +48,48 @@ class CandlestickPatternAnalyzer:
             logger.error("Invalid OHLC data provided")
             return data
             
-        # Create a copy to avoid modifying original data
         result = data.copy()
+        result['pattern'] = ''
         
-        # Analyze single candle patterns
-        result = self._analyze_single_candle_patterns(result)
-        
-        # Analyze multi-candle patterns
-        result = self._analyze_multi_candle_patterns(result)
-        
-        logger.info(f"Pattern analysis completed for {len(data)} candles")
-        return result
-    
-    def _analyze_single_candle_patterns(self, data: pd.DataFrame) -> pd.DataFrame:
-        """
-        Analyze single candle patterns.
-        
-        Args:
-            data (pd.DataFrame): OHLC data
-            
-        Returns:
-            pd.DataFrame: Data with single candle pattern columns
-        """
-        # Initialize pattern columns
-        data['is_doji'] = False
-        data['is_hammer'] = False
-        data['is_shooting_star'] = False
-        data['is_bullish'] = False
-        data['is_bearish'] = False
-        
-        for idx, row in data.iterrows():
+        # Analyze patterns for each row
+        for idx in result.index:
+            patterns = []
+            row = result.loc[idx]
             open_price = row['Open']
             high = row['High']
             low = row['Low']
             close_price = row['Close']
             
-            # Check basic bullish/bearish
-            data.at[idx, 'is_bullish'] = is_bullish(open_price, close_price)
-            data.at[idx, 'is_bearish'] = is_bearish(open_price, close_price)
+            # Single candle patterns
+            if is_doji(open_price, close_price):
+                patterns.append('doji')
+            if is_hammer(open_price, close_price, high, low):
+                patterns.append('hammer')
+            if is_shooting_star(open_price, close_price, high, low):
+                patterns.append('shooting_star')
             
-            # Check Doji
-            data.at[idx, 'is_doji'] = is_doji(open_price, close_price)
-            
-            # Check Hammer
-            data.at[idx, 'is_hammer'] = is_hammer(open_price, close_price, high, low)
-            
-            # Check Shooting Star
-            data.at[idx, 'is_shooting_star'] = is_shooting_star(open_price, close_price, high, low)
-        
-        return data
-    
-    def _analyze_multi_candle_patterns(self, data: pd.DataFrame) -> pd.DataFrame:
-        """
-        Analyze multi-candle patterns.
-        
-        Args:
-            data (pd.DataFrame): OHLC data
-            
-        Returns:
-            pd.DataFrame: Data with multi-candle pattern columns
-        """
-        # Initialize pattern columns
-        data['is_bullish_engulfing'] = False
-        data['is_bearish_engulfing'] = False
-        data['is_morning_star'] = False
-        data['is_evening_star'] = False
-        
-        # Need at least 2 candles for engulfing patterns
-        if len(data) < 2:
-            return data
-            
-        # Need at least 3 candles for star patterns
-        if len(data) < 3:
-            return data
-        
-        for i in range(1, len(data)):
+            # Multi-candle patterns (need previous/next rows)
             # Engulfing patterns (2 candles)
-            if self._is_bullish_engulfing(data.iloc[i-1], data.iloc[i]):
-                data.at[data.index[i], 'is_bullish_engulfing'] = True
-                
-            if self._is_bearish_engulfing(data.iloc[i-1], data.iloc[i]):
-                data.at[data.index[i], 'is_bearish_engulfing'] = True
-        
-        for i in range(2, len(data)):
+            if idx > 0:
+                prev_row = result.loc[idx - 1]
+                if self._is_bullish_engulfing(prev_row, row):
+                    patterns.append('bullish_engulfing')
+                if self._is_bearish_engulfing(prev_row, row):
+                    patterns.append('bearish_engulfing')
+            
             # Star patterns (3 candles)
-            if self._is_morning_star(data.iloc[i-2], data.iloc[i-1], data.iloc[i]):
-                data.at[data.index[i], 'is_morning_star'] = True
-                
-            if self._is_evening_star(data.iloc[i-2], data.iloc[i-1], data.iloc[i]):
-                data.at[data.index[i], 'is_evening_star'] = True
+            if idx > 1:
+                prev_row_1 = result.loc[idx - 1]
+                prev_row_2 = result.loc[idx - 2]
+                if self._is_morning_star(prev_row_2, prev_row_1, row):
+                    patterns.append('morning_star')
+                if self._is_evening_star(prev_row_2, prev_row_1, row):
+                    patterns.append('evening_star')
+            
+            result.at[idx, 'pattern'] = ','.join(patterns)
         
-        return data
+        logger.info(f"Pattern analysis completed for {len(data)} candles")
+        return result
     
     def _is_bullish_engulfing(self, prev_candle: pd.Series, curr_candle: pd.Series) -> bool:
         """
@@ -273,22 +224,16 @@ class CandlestickPatternAnalyzer:
         Get a summary of all patterns found in the data.
         
         Args:
-            data (pd.DataFrame): Data with pattern columns
+            data (pd.DataFrame): Data with 'pattern' column
             
         Returns:
             Dict[str, int]: Pattern name and count
         """
-        pattern_columns = [
-            'is_doji', 'is_hammer', 'is_shooting_star',
-            'is_bullish_engulfing', 'is_bearish_engulfing',
-            'is_morning_star', 'is_evening_star'
-        ]
-        
         summary = {}
-        for col in pattern_columns:
-            if col in data.columns:
-                summary[col] = data[col].sum()
-        
+        if 'pattern' not in data.columns:
+            return summary
+        for pattern_name in ['doji', 'hammer', 'shooting_star', 'bullish_engulfing', 'bearish_engulfing', 'morning_star', 'evening_star']:
+            summary[pattern_name] = data['pattern'].str.contains(pattern_name).sum()
         return summary
     
     def get_pattern_dates(self, data: pd.DataFrame, pattern_name: str) -> List[str]:
@@ -296,17 +241,19 @@ class CandlestickPatternAnalyzer:
         Get dates when a specific pattern occurred.
         
         Args:
-            data (pd.DataFrame): Data with pattern columns
+            data (pd.DataFrame): Data with 'pattern' column
             pattern_name (str): Name of the pattern to search for
             
         Returns:
             List[str]: List of dates when pattern occurred
         """
-        if pattern_name not in data.columns:
-            logger.warning(f"Pattern {pattern_name} not found in data")
+        if 'pattern' not in data.columns:
+            logger.warning(f"Pattern column not found in data")
             return []
-            
-        pattern_dates = data[data[pattern_name]]['Date'].tolist()
+        if 'Date' not in data.columns:
+            logger.warning(f"Date column not found in data")
+            return []
+        pattern_dates = data[data['pattern'].str.contains(pattern_name, na=False)]['Date'].tolist()
         return pattern_dates
 
     def process_csv_file(self, input_file_path: str, output_file_path: str = None) -> str:

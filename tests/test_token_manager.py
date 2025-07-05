@@ -1,7 +1,8 @@
 import pytest
 import json
-from src.auth import TokenManager
+from auth import TokenManager
 from src.data_fetcher import KiteConnectDataFetcher
+from auth.token_generator import generate_sha256_hash
 
 def test_token_manager_initialization():
     """Test TokenManager initialization."""
@@ -55,8 +56,6 @@ def test_historical_data_with_token_manager():
 
 def test_sha256_hash_generation():
     """Test SHA-256 hash generation functionality."""
-    from src.auth.token_generator import generate_sha256_hash
-    
     # Test with sample values
     api_key = "test_api_key_123"
     request_token = "test_request_token_456"

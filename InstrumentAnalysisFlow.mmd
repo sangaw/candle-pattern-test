@@ -1,0 +1,66 @@
+graph TD
+    A[User Input: Instrument Name] --> B[AI Agent: Parse & Understand]
+    B --> C[Search Instrument List]
+    C --> D[Filter & Rank Results]
+    D --> E[Present Options to User]
+    E --> F[User Selects Instruments]
+    F --> G[AI Agent: Validate Selection]
+    G --> H[Fetch OHLC Data via KiteConnect]
+    H --> I[Store as CSV Files]
+    I --> J[AI Agent: Confirm Success]
+    J --> K[Offer Analysis Options]
+    K --> L[User Chooses Analysis Type]
+    L --> M[Execute Analysis]
+    M --> N[Present Results]
+    N --> O[Store Analysis Results]
+    O --> P[End or Continue Loop]
+
+    subgraph "Phase 1: Instrument Discovery"
+        A
+        B
+        C
+        D
+        E
+        F
+    end
+
+    subgraph "Phase 2: Data Fetching"
+        G
+        H
+        I
+        J
+    end
+
+    subgraph "Phase 3: Analysis & Results"
+        K
+        L
+        M
+        N
+        O
+    end
+
+    subgraph "AI Agent Tools"
+        T1[Search Instruments Tool]
+        T2[Fetch OHLC Data Tool]
+        T3[Pattern Analysis Tool]
+        T4[Visualization Tool]
+        T5[Report Generation Tool]
+    end
+
+    C --> T1
+    H --> T2
+    M --> T3
+    M --> T4
+    M --> T5
+
+    %% Styling
+    classDef phase1 fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef phase2 fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef phase3 fill:#e8f5e8,stroke:#1b5e20,stroke-width:2px
+    classDef tools fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    classDef user fill:#ffebee,stroke:#c62828,stroke-width:2px
+    classDef ai fill:#f1f8e9,stroke:#33691e,stroke-width:2px
+
+    class A,F,L,P user
+    class B,G,J,K,M,N,O ai
+    class T1,T2,T3,T4,T5 tools 

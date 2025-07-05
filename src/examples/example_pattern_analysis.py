@@ -47,19 +47,18 @@ def main():
         result_df = pd.read_csv(output_file)
         
         print(f"\nSample of results (first 5 rows):")
-        print(result_df.head().to_string(index=False))
-        
+        # Show the pattern column in the sample output
+        print(result_df[['Date', 'Open', 'High', 'Low', 'Close', 'pattern']].head().to_string(index=False))
         # Show pattern summary
         pattern_summary = analyzer.get_pattern_summary(result_df)
         print(f"\nPattern Summary:")
         for pattern, count in pattern_summary.items():
             if count > 0:
                 print(f"  - {pattern}: {count} occurrences")
-        
         # Show specific pattern dates if any found
-        for pattern in ['is_doji', 'is_hammer', 'is_bullish_engulfing', 'is_bearish_engulfing']:
-            if pattern in result_df.columns and result_df[pattern].sum() > 0:
-                dates = analyzer.get_pattern_dates(result_df, pattern)
+        for pattern in ['doji', 'hammer', 'bullish_engulfing', 'bearish_engulfing']:
+            dates = analyzer.get_pattern_dates(result_df, pattern)
+            if dates:
                 print(f"\n{pattern} occurred on:")
                 for date in dates[:5]:  # Show first 5 dates
                     print(f"  - {date}")

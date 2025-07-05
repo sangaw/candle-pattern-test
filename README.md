@@ -1,6 +1,6 @@
 # NIFTY Candlestick Pattern Tester
 
-This project analyzes NIFTY and other instrument candlestick patterns using the Kite Connect API. It supports robust data fetching, token management, SHA-256 hashing, CSV export, comprehensive visualization tools, and detailed analysis with both interactive web interfaces and automated reports.
+This project analyzes NIFTY and other instrument candlestick patterns using the Kite Connect API. It supports robust data fetching, token management, SHA-256 hashing, CSV export, comprehensive visualization tools, AI-powered instrument analysis, and detailed analysis with both interactive web interfaces and automated reports.
 
 ## 🚀 Features
 - **Data Fetching**: Fetch historical OHLC (Open, High, Low, Close) data for NIFTY and any instrument on Kite Connect
@@ -12,6 +12,9 @@ This project analyzes NIFTY and other instrument candlestick patterns using the 
 - **📊 Advanced Visualization**: Interactive web-based CSV viewer with filtering and search
 - **📈 Data Profiling**: Automated ydata-profiling reports for comprehensive data analysis
 - **🔍 Pattern Analysis**: Candlestick pattern recognition with single-column output
+- **🤖 AI-Powered Analysis**: Intelligent instrument discovery and data collection workflows
+- **🛠️ Tool-Based Architecture**: Modular tools for instrument search and data collection
+- **💬 Interactive Chatbots**: Web-based and CLI interfaces for natural language interaction
 - **📝 Comprehensive Logging**: Detailed logging to `logs/data_fetcher.log`
 - **🧪 Extensive Testing**: Comprehensive test suite with examples
 - **🎯 One-off Analysis**: Run pattern analysis on any CSV file
@@ -29,9 +32,28 @@ candle-pattern-test/
 ├── logs/
 │   └── data_fetcher.log        # Log file for all data fetching operations
 ├── src/
+│   ├── ai_agent/               # 🤖 AI Agent Modules
+│   │   ├── base_agent/         # Base agent implementation
+│   │   │   ├── __init__.py
+│   │   │   ├── instrument_discovery.py
+│   │   │   ├── orchestrator.py
+│   │   │   ├── interactive_cli.py
+│   │   │   └── web_chatbot.py
+│   │   ├── tool_based_agent/   # Tool-based agent implementation
+│   │   │   ├── __init__.py
+│   │   │   ├── tool_based_agent.py
+│   │   │   ├── tool_based_web_chatbot.py
+│   │   │   └── tools/
+│   │   │       ├── __init__.py
+│   │   │       ├── instrument_search_tool.py
+│   │   │       └── data_collection_tool.py
+│   │   └── launchers/          # Launcher scripts
+│   │       ├── __init__.py
+│   │       ├── start_base_chatbot.py
+│   │       └── start_tool_based_chatbot.py
 │   ├── auth/                   # Token management and authentication
 │   ├── examples/               # Example scripts
-│   ├── visualize/              # 🆕 Visualization module
+│   ├── visualize/              # 📊 Visualization module
 │   │   ├── __init__.py
 │   │   ├── unified_csv_viewer.py      # Combined Flask + ydata-profiling viewer
 │   │   ├── generate_profile_report.py # Standalone ydata-profiling generator
@@ -40,6 +62,11 @@ candle-pattern-test/
 │   ├── data_fetcher.py         # Main data fetching logic
 │   └── utils.py
 ├── tests/                      # Test suite
+│   ├── test_ai_agent.py        # AI agent tests
+│   ├── test_tool_based_agent.py # Tool-based agent tests
+│   ├── test_data_fetcher.py    # Data fetcher tests
+│   ├── test_candlestick_patterns.py # Pattern analysis tests
+│   └── test_restructured_agents.py # Comprehensive agent tests
 ├── requirements.txt
 └── README.md
 ```
@@ -67,10 +94,29 @@ graph TD
     M --> N[Single Column Pattern Output]
     N --> O[Pattern Analysis CSV]
     
+    subgraph "AI Agent Layer"
+        P[User Input] --> Q[AI Agent]
+        Q --> R[Base Agent]
+        Q --> S[Tool-Based Agent]
+        
+        R --> T[Instrument Discovery]
+        R --> U[Data Collection]
+        
+        S --> V[Search Tools]
+        S --> W[Collection Tools]
+        
+        T --> X[Web Chatbot]
+        U --> X
+        V --> Y[Tool-Based Chatbot]
+        W --> Y
+    end
+    
     subgraph "Interactive Features"
         G
         H
         I
+        X
+        Y
     end
     
     subgraph "Automated Analysis"
@@ -84,6 +130,43 @@ graph TD
         N
         O
     end
+```
+
+## 🤖 AI Agent Features
+
+### **Base Agent**
+- **Natural Language Processing**: Understand user queries in plain English
+- **Instrument Discovery**: Intelligent search and filtering of instruments
+- **Data Collection Workflow**: Automated data fetching and processing
+- **Interactive CLI**: Command-line interface for direct interaction
+- **Web Chatbot**: Modern web interface with real-time responses
+
+### **Tool-Based Agent**
+- **Modular Architecture**: Separate tools for different functionalities
+- **Instrument Search Tool**: Advanced search with relevance scoring
+- **Data Collection Tool**: Automated data fetching with error handling
+- **Enhanced Web Interface**: Detailed logging and status tracking
+- **State Management**: Persistent conversation state and context
+
+### **Usage Examples**
+```bash
+# Start base agent chatbot
+python src/ai_agent/launchers/start_base_chatbot.py
+
+# Start tool-based agent chatbot
+python src/ai_agent/launchers/start_tool_based_chatbot.py
+
+# Interactive CLI
+python src/ai_agent/base_agent/interactive_cli.py
+```
+
+**Sample Interactions:**
+```
+User: "Find BANKNIFTY options"
+Agent: "I found 10 instruments related to 'Find BANKNIFTY options'..."
+
+User: "BANKNIFTY25JUL56800CE"
+Agent: "Selected instruments for analysis: BANKNIFTY (BANKNIFTY25JUL56800CE)"
 ```
 
 ## 🎯 Visualization Features
@@ -143,7 +226,19 @@ pytest -v
 pytest --cov=src
 ```
 
-### **2. Test Data Fetcher**
+### **2. Test AI Agents**
+```bash
+# Test base agent
+python -m pytest tests/test_ai_agent.py -v
+
+# Test tool-based agent
+python -m pytest tests/test_tool_based_agent.py -v
+
+# Test comprehensive agent functionality
+python -m pytest tests/test_restructured_agents.py -v
+```
+
+### **3. Test Data Fetcher**
 ```bash
 # Test instrument list fetching
 python -m pytest tests/test_data_fetcher.py::test_fetch_instrument_list -v
@@ -155,7 +250,7 @@ python -m pytest tests/test_data_fetcher.py::test_fetch_historical_candles -v
 python -m pytest tests/test_data_fetcher.py::test_fetch_daily_candles_for_instruments -v
 ```
 
-### **3. Test Visualization Module**
+### **4. Test Visualization Module**
 ```bash
 # Test unified viewer (requires CSV file)
 python src/visualize/unified_csv_viewer.py data/instruments_list_20250705_093603.csv --profile-only
@@ -164,7 +259,7 @@ python src/visualize/unified_csv_viewer.py data/instruments_list_20250705_093603
 python src/visualize/generate_profile_report.py data/instruments_list_20250705_093603.csv
 ```
 
-### **4. Test Pattern Analysis**
+### **5. Test Pattern Analysis**
 ```bash
 # Test candlestick pattern recognition
 python -m pytest tests/test_candlestick_patterns.py -v
@@ -173,7 +268,7 @@ python -m pytest tests/test_candlestick_patterns.py -v
 python src/examples/example_oneoff_pattern_analysis.py
 ```
 
-### **5. Test Examples**
+### **6. Test Examples**
 ```bash
 # Set PYTHONPATH for examples
 export PYTHONPATH=$(pwd)
@@ -226,7 +321,18 @@ python src/examples/example_instrument_list.py
 python src/examples/example_daily_candles.py
 ```
 
-### **4. Visualize Data**
+### **4. Start AI Chatbot**
+```bash
+# Start tool-based chatbot (recommended)
+python src/ai_agent/launchers/start_tool_based_chatbot.py
+
+# Start base chatbot
+python src/ai_agent/launchers/start_base_chatbot.py
+
+# Access at http://127.0.0.1:5001 (tool-based) or http://127.0.0.1:5002 (base)
+```
+
+### **5. Visualize Data**
 ```bash
 # Start interactive viewer
 python src/visualize/unified_csv_viewer.py data/instruments_list_20250705_093603.csv
@@ -234,7 +340,7 @@ python src/visualize/unified_csv_viewer.py data/instruments_list_20250705_093603
 # Access at http://127.0.0.1:5000
 ```
 
-### **5. Run Pattern Analysis**
+### **6. Run Pattern Analysis**
 ```bash
 # Analyze patterns on NIFTY data
 python src/examples/example_pattern_analysis.py
@@ -290,22 +396,29 @@ All operations are logged to `logs/data_fetcher.log`:
 - Data fetching operations
 - Visualization generation
 - Pattern analysis results
+- AI agent interactions and workflows
 - Errors and warnings
 
 ## 🎯 Use Cases
 
-### **1. Data Exploration**
+### **1. AI-Powered Analysis**
+- Use natural language to search for instruments
+- Automated data collection workflows
+- Intelligent pattern recognition and analysis
+- Interactive chatbot interfaces
+
+### **2. Data Exploration**
 - Use the interactive viewer to explore instrument data
 - Filter by specific names (NIFTY, BANKNIFTY, etc.)
 - Search for specific trading symbols
 - Generate comprehensive data profiling reports
 
-### **2. Pattern Analysis**
+### **3. Pattern Analysis**
 - Analyze candlestick patterns on historical data
 - Run one-off analysis on any CSV file
 - Export pattern results for further analysis
 
-### **3. Research & Development**
+### **4. Research & Development**
 - Test pattern recognition algorithms
 - Validate data quality with profiling reports
 - Explore correlations between variables
@@ -315,10 +428,13 @@ All operations are logged to `logs/data_fetcher.log`:
 
 ### **Common Issues**
 
-1. **Port 5000 Already in Use**
+1. **Port Already in Use**
    ```bash
-   # Use different port
+   # Use different port for visualization
    python src/visualize/unified_csv_viewer.py data/file.csv --port 8080
+   
+   # Use different port for chatbots
+   # Edit the port in the launcher scripts
    ```
 
 2. **ydata-profiling Import Error**
@@ -335,6 +451,15 @@ All operations are logged to `logs/data_fetcher.log`:
    - Ensure CSV file exists in `data/` directory
    - Check file permissions
 
+5. **AI Agent Import Errors**
+   ```bash
+   # Set PYTHONPATH
+   export PYTHONPATH=$(pwd)
+   
+   # Install missing dependencies
+   pip install -r requirements.txt
+   ```
+
 ## 🤝 Contributing
 
 1. Fork the repository
@@ -349,6 +474,15 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## 🆕 Recent Updates
 
+### **v3.0 - AI Agent Architecture**
+- ✅ Added AI-powered instrument analysis workflows
+- ✅ Tool-based agent architecture with modular tools
+- ✅ Base agent with natural language processing
+- ✅ Interactive web chatbots with modern UI
+- ✅ Comprehensive logging and state management
+- ✅ Enhanced testing suite for all agent components
+- ✅ Restructured project organization
+
 ### **v2.0 - Visualization Module**
 - ✅ Added comprehensive CSV visualization tools
 - ✅ Interactive Flask web interface with filtering
@@ -360,4 +494,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ---
 
-**Happy Trading! 📈📊** 
+**Happy Trading! 📈📊🤖** 

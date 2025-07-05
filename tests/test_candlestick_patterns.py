@@ -183,7 +183,6 @@ class TestCandlestickPatternAnalyzer:
 def test_pattern_detection_accuracy():
     """Test that specific patterns are detected correctly."""
     analyzer = CandlestickPatternAnalyzer()
-    
     # Create data with known patterns
     # Hammer pattern: small body, long lower shadow
     hammer_data = pd.DataFrame({
@@ -193,12 +192,9 @@ def test_pattern_detection_accuracy():
         'Low': [98, 90, 103],  # Long lower shadow for hammer
         'Close': [101, 96, 106]
     })
-    
     result = analyzer.analyze_patterns(hammer_data)
-    
     # Check that hammer is detected on the second candle
-    assert result.iloc[1]['is_hammer'] == True, "Hammer pattern should be detected"
-    
+    assert 'hammer' in result.iloc[1]['pattern'], "Hammer pattern should be detected"
     # Check that other patterns are not falsely detected
-    assert result.iloc[1]['is_doji'] == False, "Should not be detected as doji"
-    assert result.iloc[1]['is_shooting_star'] == False, "Should not be detected as shooting star" 
+    assert 'doji' not in result.iloc[1]['pattern'], "Should not be detected as doji"
+    assert 'shooting_star' not in result.iloc[1]['pattern'], "Should not be detected as shooting star" 

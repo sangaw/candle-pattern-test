@@ -7,7 +7,7 @@ import pandas as pd
 from datetime import datetime
 from typing import Optional
 import logging
-from src.auth import TokenManager
+from auth import TokenManager
 
 # Ensure logs directory exists
 os.makedirs('logs', exist_ok=True)
@@ -524,11 +524,9 @@ class KiteConnectDataFetcher:
                 'open': 'Open', 'high': 'High', 'low': 'Low', 'close': 'Close', 'volume': 'Volume'
             })
             result = analyzer.analyze_patterns(df_renamed)
-            pattern_info = result.iloc[0].to_dict()
-            # Find which pattern is True
-            patterns = [k for k, v in pattern_info.items() if k.startswith('is_') and v]
-            if patterns:
-                logger.info(f"Candlestick pattern(s) on {date}: {patterns}")
+            pattern_value = result.iloc[0]['pattern']
+            if pattern_value:
+                logger.info(f"Candlestick pattern(s) on {date}: {pattern_value}")
             else:
                 logger.info(f"No major candlestick pattern detected on {date}")
         return day_row 
