@@ -62,7 +62,8 @@ def load_config():
         logger.error(f"Invalid JSON in configuration file: {config_path}")
         raise ValueError(f"Invalid JSON in configuration file: {config_path}")
 
-config = load_config()
+# Don't load config at module level - let each instance load its own config
+# config = load_config()
 
 class KiteConnectDataFetcher:
     """
