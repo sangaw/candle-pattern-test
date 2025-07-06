@@ -529,4 +529,6 @@ class KiteConnectDataFetcher:
                 logger.info(f"Candlestick pattern(s) on {date}: {pattern_value}")
             else:
                 logger.info(f"No major candlestick pattern detected on {date}")
-        return day_row 
+        return day_row
+
+ 
