@@ -2,6 +2,38 @@
 
 This project analyzes NIFTY and other instrument candlestick patterns using the Kite Connect API. It supports robust data fetching, token management, SHA-256 hashing, CSV export, comprehensive visualization tools, AI-powered instrument analysis, and detailed analysis with both interactive web interfaces and automated reports.
 
+## 📒 NIFTY Data Analysis Workflow (New!)
+
+A new workflow module is available under `src/workflow/`:
+
+- `nifty_data_analysis.py`: End-to-end script for fetching, analyzing, and reporting NIFTY daily candle data and patterns.
+- `nifty_data_analysis.ipynb`: Jupyter notebook version for interactive, step-by-step analysis and visualization.
+
+**Features:**
+- Robust path handling for config and data directories.
+- Improved error handling for notebook and script execution.
+- Compatible with both project root and workflow directory execution.
+
+### How to Run the Notebook
+
+From the project root:
+```bash
+cd /path/to/candle-pattern-test/candle-pattern-test
+jupyter notebook src/workflow/nifty_data_analysis.ipynb
+```
+
+### Data Fetcher Improvements
+
+- `src/data_fetcher.py` now loads configuration only when a fetcher instance is created, not at import time. This prevents import errors in Jupyter and improves modularity.
+
+### Troubleshooting
+
+- **Import errors in notebook:** Always start Jupyter from the project root.
+- **FileNotFoundError for config:** Ensure `config/local-settings.json` exists and is accessible from the current working directory.
+- **Column name errors:** The workflow now auto-detects column names for robust plotting and reporting.
+
+---
+
 ## 🚀 Features
 - **Data Fetching**: Fetch historical OHLC (Open, High, Low, Close) data for NIFTY and any instrument on Kite Connect
 - **Automatic Token Management**: Automatic token refresh and validation for Kite Connect API
@@ -472,25 +504,11 @@ All operations are logged to `logs/data_fetcher.log`:
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
-## 🆕 Recent Updates
+## 🆕 Recent Changes
 
-### **v3.0 - AI Agent Architecture**
-- ✅ Added AI-powered instrument analysis workflows
-- ✅ Tool-based agent architecture with modular tools
-- ✅ Base agent with natural language processing
-- ✅ Interactive web chatbots with modern UI
-- ✅ Comprehensive logging and state management
-- ✅ Enhanced testing suite for all agent components
-- ✅ Restructured project organization
-
-### **v2.0 - Visualization Module**
-- ✅ Added comprehensive CSV visualization tools
-- ✅ Interactive Flask web interface with filtering
-- ✅ ydata-profiling integration for automated analysis
-- ✅ Unified viewer combining both approaches
-- ✅ Enhanced pattern analysis with single-column output
-- ✅ Improved project structure and organization
-- ✅ Comprehensive testing and documentation
+- Added robust NIFTY data analysis workflow (script + notebook)
+- Improved compatibility for Jupyter and script execution
+- Enhanced error handling and path management in data fetcher and workflow
 
 ---
 
