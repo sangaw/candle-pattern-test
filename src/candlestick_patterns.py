@@ -9,7 +9,7 @@ import pandas as pd
 import numpy as np
 from typing import Dict, List, Any, Optional, Tuple
 import logging
-from src.utils import (
+from utils import (
     is_bullish, is_bearish, is_doji, is_hammer, is_shooting_star,
     calculate_body_size, calculate_shadow_size, validate_ohlc_data
 )
