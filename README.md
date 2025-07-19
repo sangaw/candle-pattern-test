@@ -16,6 +16,8 @@ A new workflow module is available under `src/workflow/`:
 
 ### How to Run the Notebook
 
+# source candle-pattern-test/bin/activate
+
 From the project root:
 ```bash
 cd /path/to/candle-pattern-test/candle-pattern-test
