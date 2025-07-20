@@ -9,3 +9,6 @@ python src/auth/get_request_token.py
 
 python src/auth/token_generator.py
 # (Follow prompts to generate and save access token)
+
+
+Is this in line with MachineLearning.md that we documented earlie?
