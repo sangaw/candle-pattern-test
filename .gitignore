@@ -148,4 +148,4 @@ Thumbs.db
 data/*.csv
 *.json
 logs/
-config/local-settings.json 
+config/local-settings.json myenv/
