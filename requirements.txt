@@ -39,5 +39,7 @@ torch
 torchvision
 torchaudio
 
+gymnasium
+
 ydata_profiling
 
