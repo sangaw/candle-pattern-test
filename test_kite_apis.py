@@ -9,6 +9,8 @@ sys.path.insert(0, 'src')
 # Change to kite-apis directory for imports
 original_cwd = os.getcwd()
 os.chdir('src/kite-apis')
+# Add current directory to Python path for imports
+sys.path.insert(0, os.getcwd())
 
 try:
     from test_all_apis import APITestRunner

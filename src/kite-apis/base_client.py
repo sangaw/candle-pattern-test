@@ -3,6 +3,7 @@ Base client for Kite Connect API with authentication and logging.
 """
 import logging
 import json
+import os
 from datetime import datetime
 from typing import Dict, Any, Optional
 from kiteconnect import KiteConnect
@@ -18,11 +19,33 @@ class KiteAPIClient:
         Args:
             config_path (str): Path to configuration file
         """
-        self.config_path = config_path
+        self.config_path = self._resolve_config_path(config_path)
         self.config = self._load_config()
         self.logger = self._setup_logging()
         self.kite = None
         self.authenticate()
+    
+    def _resolve_config_path(self, config_path: str) -> str:
+        """Resolve config path relative to project root."""
+        # If path is absolute, use it as is
+        if os.path.isabs(config_path):
+            return config_path
+        
+        # If file exists at the given path, use it
+        if os.path.exists(config_path):
+            return os.path.abspath(config_path)
+        
+        # Otherwise, try to find it relative to project root
+        # Project root is 2 levels up from this file (src/kite-apis/base_client.py)
+        current_file_dir = os.path.dirname(os.path.abspath(__file__))
+        project_root = os.path.dirname(os.path.dirname(current_file_dir))
+        resolved_path = os.path.join(project_root, config_path)
+        
+        if os.path.exists(resolved_path):
+            return resolved_path
+        
+        # If still not found, return original path (will fail with clear error)
+        return config_path
         
     def _load_config(self) -> Dict[str, Any]:
         """Load configuration from file."""
@@ -31,14 +54,18 @@ class KiteAPIClient:
     
     def _setup_logging(self) -> logging.Logger:
         """Setup logging configuration."""
-        import os
-        os.makedirs('logs', exist_ok=True)
+        # Resolve logs directory relative to project root
+        current_file_dir = os.path.dirname(os.path.abspath(__file__))
+        project_root = os.path.dirname(os.path.dirname(current_file_dir))
+        logs_dir = os.path.join(project_root, 'logs')
+        os.makedirs(logs_dir, exist_ok=True)
         
         logger = logging.getLogger('kite_api_client')
         logger.setLevel(logging.DEBUG)
         
         # Create file handler
-        file_handler = logging.FileHandler('logs/kite_api_client.log')
+        log_file_path = os.path.join(logs_dir, 'kite_api_client.log')
+        file_handler = logging.FileHandler(log_file_path)
         file_handler.setLevel(logging.DEBUG)
         
         # Create console handler

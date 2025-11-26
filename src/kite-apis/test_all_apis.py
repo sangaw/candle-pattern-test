@@ -42,13 +42,18 @@ class APITestRunner:
     def _setup_logging(self) -> logging.Logger:
         """Setup logging configuration."""
         import os
-        os.makedirs('logs', exist_ok=True)
+        # Resolve logs directory relative to project root
+        current_file_dir = os.path.dirname(os.path.abspath(__file__))
+        project_root = os.path.dirname(os.path.dirname(current_file_dir))
+        logs_dir = os.path.join(project_root, 'logs')
+        os.makedirs(logs_dir, exist_ok=True)
         
         logger = logging.getLogger('api_test_runner')
         logger.setLevel(logging.DEBUG)
         
         # File handler
-        file_handler = logging.FileHandler('logs/api_test_runner.log')
+        log_file_path = os.path.join(logs_dir, 'api_test_runner.log')
+        file_handler = logging.FileHandler(log_file_path)
         file_handler.setLevel(logging.DEBUG)
         
         # Console handler
@@ -80,9 +85,9 @@ class APITestRunner:
         try:
             user_apis = UserAPIs()
             self.results['user_apis'] = user_apis.run_all_tests()
-            self.logger.info("✓ User APIs completed")
+            self.logger.info("PASS: User APIs completed")
         except Exception as e:
-            self.logger.error(f"✗ User APIs failed: {str(e)}")
+            self.logger.error(f"FAIL: User APIs failed: {str(e)}")
             self.results['user_apis'] = {'error': str(e)}
     
     def test_portfolio_apis(self):
@@ -91,9 +96,9 @@ class APITestRunner:
         try:
             portfolio_apis = PortfolioAPIs()
             self.results['portfolio_apis'] = portfolio_apis.run_all_tests()
-            self.logger.info("✓ Portfolio APIs completed")
+            self.logger.info("PASS: Portfolio APIs completed")
         except Exception as e:
-            self.logger.error(f"✗ Portfolio APIs failed: {str(e)}")
+            self.logger.error(f"FAIL: Portfolio APIs failed: {str(e)}")
             self.results['portfolio_apis'] = {'error': str(e)}
     
     def test_market_apis(self):
@@ -102,9 +107,9 @@ class APITestRunner:
         try:
             market_apis = MarketAPIs()
             self.results['market_apis'] = market_apis.run_all_tests()
-            self.logger.info("✓ Market APIs completed")
+            self.logger.info("PASS: Market APIs completed")
         except Exception as e:
-            self.logger.error(f"✗ Market APIs failed: {str(e)}")
+            self.logger.error(f"FAIL: Market APIs failed: {str(e)}")
             self.results['market_apis'] = {'error': str(e)}
     
     def test_instruments_apis(self):
@@ -113,9 +118,9 @@ class APITestRunner:
         try:
             instruments_apis = InstrumentsAPIs()
             self.results['instruments_apis'] = instruments_apis.run_all_tests()
-            self.logger.info("✓ Instruments APIs completed")
+            self.logger.info("PASS: Instruments APIs completed")
         except Exception as e:
-            self.logger.error(f"✗ Instruments APIs failed: {str(e)}")
+            self.logger.error(f"FAIL: Instruments APIs failed: {str(e)}")
             self.results['instruments_apis'] = {'error': str(e)}
     
     def test_historical_apis(self):
@@ -124,9 +129,9 @@ class APITestRunner:
         try:
             historical_apis = HistoricalAPIs()
             self.results['historical_apis'] = historical_apis.run_all_tests()
-            self.logger.info("✓ Historical APIs completed")
+            self.logger.info("PASS: Historical APIs completed")
         except Exception as e:
-            self.logger.error(f"✗ Historical APIs failed: {str(e)}")
+            self.logger.error(f"FAIL: Historical APIs failed: {str(e)}")
             self.results['historical_apis'] = {'error': str(e)}
     
     def test_gtt_apis(self):
@@ -135,9 +140,9 @@ class APITestRunner:
         try:
             gtt_apis = GTTAPIs()
             self.results['gtt_apis'] = gtt_apis.run_all_tests()
-            self.logger.info("✓ GTT APIs completed")
+            self.logger.info("PASS: GTT APIs completed")
         except Exception as e:
-            self.logger.error(f"✗ GTT APIs failed: {str(e)}")
+            self.logger.error(f"FAIL: GTT APIs failed: {str(e)}")
             self.results['gtt_apis'] = {'error': str(e)}
     
     def test_orders_apis(self):
@@ -146,9 +151,9 @@ class APITestRunner:
         try:
             orders_apis = OrdersAPIs()
             self.results['orders_apis'] = orders_apis.run_all_tests()
-            self.logger.info("✓ Orders APIs completed")
+            self.logger.info("PASS: Orders APIs completed")
         except Exception as e:
-            self.logger.error(f"✗ Orders APIs failed: {str(e)}")
+            self.logger.error(f"FAIL: Orders APIs failed: {str(e)}")
             self.results['orders_apis'] = {'error': str(e)}
     
     def test_mutualfunds_apis(self):
@@ -157,15 +162,20 @@ class APITestRunner:
         try:
             mf_apis = MutualFundsAPIs()
             self.results['mutualfunds_apis'] = mf_apis.run_all_tests()
-            self.logger.info("✓ Mutual Funds APIs completed")
+            self.logger.info("PASS: Mutual Funds APIs completed")
         except Exception as e:
-            self.logger.error(f"✗ Mutual Funds APIs failed: {str(e)}")
+            self.logger.error(f"FAIL: Mutual Funds APIs failed: {str(e)}")
             self.results['mutualfunds_apis'] = {'error': str(e)}
     
     def save_results(self):
         """Save test results to file."""
+        import os
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        filename = f'logs/api_test_results_{timestamp}.json'
+        # Resolve logs directory relative to project root
+        current_file_dir = os.path.dirname(os.path.abspath(__file__))
+        project_root = os.path.dirname(os.path.dirname(current_file_dir))
+        logs_dir = os.path.join(project_root, 'logs')
+        filename = os.path.join(logs_dir, f'api_test_results_{timestamp}.json')
         
         with open(filename, 'w') as f:
             json.dump(self.results, f, indent=2, default=str)
@@ -179,7 +189,7 @@ class APITestRunner:
         self.logger.info("="*80)
         
         for api_category, results in self.results.items():
-            status = "✓ PASS" if 'error' not in str(results) else "✗ FAIL"
+            status = "PASS" if 'error' not in str(results) else "FAIL"
             self.logger.info(f"{status}: {api_category.upper()}")
         
         self.logger.info("="*80)
