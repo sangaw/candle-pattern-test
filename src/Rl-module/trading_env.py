@@ -150,8 +150,10 @@ class RiskRewardTradingEnv(gym.Env):
             
             # Check Stop Loss (Risk Breached)
             if self.current_drawdown > self.max_drawdown:
-                reward -= 1.0 # Heavy penalty for hitting the hard stop-loss
+                reward -= 1.0  # Heavy penalty for hitting the hard stop-loss
                 reward += self._close_position_and_log(current_price, "STOP_LOSS")
+                # HARD risk constraint: once max_drawdown is breached, end the episode
+                terminated = True
                 
             # Check Take Profit (Reward Achieved)
             if self.entry_price != 0: 
