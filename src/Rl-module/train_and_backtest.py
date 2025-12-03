@@ -117,27 +117,34 @@ train_env = make_vec_env(
     n_envs=1
 )
 
+# Double-DQN specific hyperparameters (SB3 DQN is Double-DQN by default;
+# here we only customize the network architecture via policy_kwargs)
+ddqn_policy_kwargs = dict(
+    net_arch=[256, 256],
+)
 
-# train_env = make_vec_env(
-#    lambda: RiskRewardTradingEnv(train_df, scaler=scaler), 
-#    n_envs=1
-#)
-
-
-model = DQN(
+ddqn_model = DQN(
     "MlpPolicy",
     train_env, 
-    learning_rate=5e-4,
-    buffer_size=100000,     # Experience Replay Buffer (uses RAM)
-    learning_starts=1000,
+    learning_rate=2.5e-4,
+    buffer_size=200000,     # Experience Replay Buffer (uses RAM)
+    learning_starts=2000,
+    batch_size=128,
     gamma=0.99,
-    exploration_fraction=0.5,
+    tau=1.0,
+    train_freq=4,
+    gradient_steps=1,
+    target_update_interval=500,
+    exploration_fraction=0.2,
+    exploration_initial_eps=1.0,
+    exploration_final_eps=0.02,
+    policy_kwargs=ddqn_policy_kwargs,
     verbose=0,
     device='cpu'            # Explicitly use the CPU
 )
 
-model.learn(total_timesteps=1000000) 
-model.save(MODEL_PATH)
+ddqn_model.learn(total_timesteps=400000) 
+ddqn_model.save(MODEL_PATH)
 print("Training complete and model saved.")
 
 
@@ -147,7 +154,7 @@ print("Training complete and model saved.")
 
 print("\n--- Starting Backtest on Unseen Test Data ---")
 
-# Load the trained model
+# Load the trained DDQN model
 loaded_model = DQN.load(MODEL_PATH, device='cpu')
 
 # Create a single test environment for step-by-step backtesting

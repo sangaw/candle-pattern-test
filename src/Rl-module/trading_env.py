@@ -78,8 +78,8 @@ class RiskRewardTradingEnv(gym.Env):
         current_data = self.scaled_df.iloc[self.current_step]
         current_price = current_data[self.scaled_df.columns[0]] 
 
-        print(f"current_price: {current_price}")
-        print(f"action: {action}")
+        # print(f"current_price: {current_price}")
+        # print(f"action: {action}")
         
         reward = 0
         terminated = False
@@ -114,10 +114,10 @@ class RiskRewardTradingEnv(gym.Env):
         self.max_net_worth = max(self.max_net_worth, self.net_worth)
         self.current_drawdown = (self.max_net_worth - self.net_worth) / self.max_net_worth
 
-        print(f"current_market_value: {current_market_value}")
-        print(f"self.net_worth: {self.net_worth}")
-        print(f"self.max_net_worth: {self.max_net_worth}")
-        print(f"self.current_drawdown: {self.current_drawdown}")
+        # print(f"current_market_value: {current_market_value}")
+        # print(f"self.net_worth: {self.net_worth}")
+        # print(f"self.max_net_worth: {self.max_net_worth}")
+        # print(f"self.current_drawdown: {self.current_drawdown}")
         
         # --- Check Termination & Reward Logic (RR Condition) ---
         
@@ -140,7 +140,7 @@ class RiskRewardTradingEnv(gym.Env):
                 price_change_percent = 0 
             
             target_percent = self.max_drawdown * self.rr_ratio
-            print(f"target_percent: {target_percent}") 
+            # print(f"target_percent: {target_percent}") 
             
             if price_change_percent >= target_percent:
                 reward += 5.0 * self.rr_ratio 
